@@ -42,16 +42,12 @@ class Percent {
         return ((float) Math.round(value * 10000)) / 10000;
     }
 
-    public static String toWholeString(float value) {
-        return (value < 0 ? "-" : value > 0 ? "+" : "") + toWholeNoSignString(value);
-    }
-
     public static String toString(float value) {
         return (value < 0 ? "-" : value > 0 ? "+" : "") + toNoSignString(value);
     }
 
     public static String toWholeNoSignString(float value) {
-        return Math.abs(of(value)) + "%";
+        return Math.abs(ofAndFourDigit(value)) + "%";
     }
 
     public static String toNoSignString(float value) {

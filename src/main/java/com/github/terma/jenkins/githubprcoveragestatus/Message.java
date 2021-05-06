@@ -38,32 +38,35 @@ class Message {
         this.masterCoverage = Percent.roundFourAfterDigit(masterCoverage);
     }
 
-    public String forConsole() {
-        return String.format("Coverage %s changed %s vs master %s",
+    public String forConsole(final String targetBranch) {
+        return String.format("Coverage %s changed %s vs %s %s",
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, masterCoverage)),
+                targetBranch,
                 Percent.toWholeNoSignString(masterCoverage));
     }
 
     public String forComment(
             final String buildUrl, final String jenkinsUrl,
             final int yellowThreshold, final int greenThreshold,
-            final boolean useShieldsIo) {
-        final String icon = forIcon();
+            final boolean useShieldsIo, final String targetBranch) {
+        final String icon = forIcon(targetBranch);
         if (useShieldsIo) {
             return "[![" + icon + "](" + shieldIoUrl(icon, yellowThreshold, greenThreshold) + ")](" + buildUrl + ")";
         } else {
             return "[![" + icon + "](" + jenkinsUrl + "/coverage-status-icon/" +
                     "?coverage=" + coverage +
                     "&masterCoverage=" + masterCoverage +
+                    "&targetBranch=" + targetBranch +
                     ")](" + buildUrl + ")";
         }
     }
 
-    public String forStatusCheck() {
-        return String.format("Coverage %s changed %s vs master %s",
+    public String forStatusCheck(final String targetBranch) {
+        return String.format("Coverage %s changed %s vs %s %s",
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, masterCoverage)),
+                targetBranch,
                 Percent.toWholeNoSignString(masterCoverage));
     }
 
@@ -81,7 +84,10 @@ class Message {
     private String getColor(int yellowThreshold, int greenThreshold) {
         String color = COLOR_GREEN;
         final int coveragePercent = Percent.of(coverage);
-        if (coveragePercent < yellowThreshold) {
+        final boolean isCoverageHigher = Percent.change(coverage, masterCoverage) >= 0;
+        if (isCoverageHigher) {
+            return color;
+        } else if (coveragePercent < yellowThreshold) {
             color = COLOR_RED;
         } else if (coveragePercent < greenThreshold) {
             color = COLOR_YELLOW;
@@ -92,10 +98,12 @@ class Message {
     /**
      * Example: 92% (+23%) vs master 70%
      */
-    public String forIcon() {
-        return String.format("%s (%s) vs master %s",
+    public String forIcon(final String targetBranch) {
+        return String.format("%s (%s) vs %s %s",
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, masterCoverage)),
+                targetBranch,
                 Percent.toWholeNoSignString(masterCoverage));
     }
+
 }

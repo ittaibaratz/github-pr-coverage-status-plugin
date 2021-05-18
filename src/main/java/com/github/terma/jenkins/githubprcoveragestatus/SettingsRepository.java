@@ -14,7 +14,7 @@ interface SettingsRepository {
 
     boolean isPrivateJenkinsPublicGitHub();
 
-    boolean isUseSonarForMasterCoverage();
+    boolean isUseSonarForTargetCoverage();
 
     boolean isDisableSimpleCov();
 

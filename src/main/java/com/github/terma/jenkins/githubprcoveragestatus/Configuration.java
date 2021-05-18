@@ -73,12 +73,12 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         return DESCRIPTOR.getSonarPassword();
     }
 
-    public static Boolean isUseSonarForMasterCoverage() {
-        return DESCRIPTOR.isUseSonarForMasterCoverage();
+    public static Boolean isUseSonarForTargetCoverage() {
+        return DESCRIPTOR.isUseSonarForTargetCoverage();
     }
 
-    public static void setMasterCoverage(final String repo, final float coverage) {
-        DESCRIPTOR.set(repo, coverage);
+    public static void setBranchCoverage(final String repo, final String branch, final float coverage) {
+        DESCRIPTOR.set(repo + "-" + branch, coverage);
     }
 
     @Override
@@ -99,7 +99,7 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         private String personalAccessToken;
         private String jenkinsUrl;
         private boolean privateJenkinsPublicGitHub;
-        private boolean useSonarForMasterCoverage;
+        private boolean useSonarForTargetCoverage;
         private String sonarUrl;
         private String sonarToken;
         private String sonarLogin;
@@ -153,8 +153,8 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         }
 
         @Override
-        public boolean isUseSonarForMasterCoverage() {
-            return useSonarForMasterCoverage;
+        public boolean isUseSonarForTargetCoverage() {
+            return useSonarForTargetCoverage;
         }
 
         @Override
@@ -193,7 +193,7 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
             greenThreshold = NumberUtils.toInt(formData.getString("greenThreshold"), DEFAULT_GREEN_THRESHOLD);
             jenkinsUrl = StringUtils.trimToNull(formData.getString("jenkinsUrl"));
             privateJenkinsPublicGitHub = BooleanUtils.toBoolean(formData.getString("privateJenkinsPublicGitHub"));
-            useSonarForMasterCoverage = BooleanUtils.toBoolean(formData.getString("useSonarForMasterCoverage"));
+            useSonarForTargetCoverage = BooleanUtils.toBoolean(formData.getString("useSonarForTargetCoverage"));
             disableSimpleCov = BooleanUtils.toBoolean(formData.getString("disableSimpleCov"));
             sonarUrl = StringUtils.trimToNull(formData.getString("sonarUrl"));
             sonarToken = StringUtils.trimToNull(formData.getString("sonarToken"));

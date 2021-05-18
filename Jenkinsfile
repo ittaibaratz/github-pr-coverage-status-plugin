@@ -3,5 +3,5 @@ buildPlugin(platforms: ['linux'], findbugs: [archive: true, unstableTotalAll: '0
 
 //node {
 //    stage 'post-build'
-//    step([$class: 'MasterCoverageAction'])
+//    step([$class: 'BranchCoverageAction'])
 //}

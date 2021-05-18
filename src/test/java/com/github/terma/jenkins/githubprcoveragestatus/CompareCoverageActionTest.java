@@ -35,12 +35,13 @@ import static org.mockito.Mockito.*;
 public class CompareCoverageActionTest {
 
     private static final String GIT_URL = "git@github.com:some/my-project.git";
+    private static final String CHANGE_TARGET = "master";
     private Build build = mock(Build.class);
     private PrintWriter printWriter = mock(PrintWriter.class);
     private TaskListener listener = mock(TaskListener.class);
     private EnvVars envVars = mock(EnvVars.class);
 
-    private MasterCoverageRepository masterCoverageRepository = mock(MasterCoverageRepository.class);
+    private TargetCoverageRepository branchCoverageRepository = mock(TargetCoverageRepository.class);
     private CoverageRepository coverageRepository = mock(CoverageRepository.class);
     private SettingsRepository settingsRepository = mock(SettingsRepository.class);
     private PullRequestRepository pullRequestRepository = mock(PullRequestRepository.class);
@@ -57,7 +58,7 @@ public class CompareCoverageActionTest {
 
     @Before
     public void initMocks() throws IOException, InterruptedException {
-        ServiceRegistry.setMasterCoverageRepository(masterCoverageRepository);
+        ServiceRegistry.setTargetCoverageRepository(branchCoverageRepository);
         ServiceRegistry.setCoverageRepository(coverageRepository);
         ServiceRegistry.setSettingsRepository(settingsRepository);
         ServiceRegistry.setPullRequestRepository(pullRequestRepository);
@@ -67,7 +68,7 @@ public class CompareCoverageActionTest {
     
     @Before
     public void reinitializeCoverageRepositories() {
-        masterCoverageRepository = mock(MasterCoverageRepository.class);
+        branchCoverageRepository = mock(TargetCoverageRepository.class);
         coverageRepository = mock(CoverageRepository.class);
     }
 
@@ -84,7 +85,7 @@ public class CompareCoverageActionTest {
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](aaa/coverage-status-icon/?coverage=0.0&masterCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](aaa/coverage-status-icon/?coverage=0.0&branchCoverage=0.0)](aaa/job/a)");
     }
 
     @Test
@@ -180,11 +181,11 @@ public class CompareCoverageActionTest {
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](customJ/coverage-status-icon/?coverage=0.0&masterCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](customJ/coverage-status-icon/?coverage=0.0&branchCoverage=0.0)](aaa/job/a)");
     }
     
-    private void prepareCoverageData(float masterCoverage, float prCoverage) throws IOException, InterruptedException {
-        when(masterCoverageRepository.get(GIT_URL)).thenReturn(masterCoverage);
+    private void prepareCoverageData(float branchCoverage, float prCoverage) throws IOException, InterruptedException {
+        when(branchCoverageRepository.get(GIT_URL, CHANGE_TARGET)).thenReturn(branchCoverage);
         when(coverageRepository.get(null)).thenReturn(prCoverage);
         initMocks();
     }

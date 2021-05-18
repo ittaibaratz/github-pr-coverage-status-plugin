@@ -39,13 +39,15 @@ public class CoverageStatusIconAction implements UnprotectedRootAction {
     public void doIndex(StaplerRequest request, StaplerResponse response) throws IOException {
         final float coverage = Float.parseFloat(request.getParameter("coverage"));
         final float masterCoverage = Float.parseFloat(request.getParameter("masterCoverage"));
+        final String branchName = request.getParameter("branchName");
+        final String changeTarget = request.getParameter("changeTarget");
 
         response.setContentType("image/svg+xml");
 
         String svg = IOUtils.toString(this.getClass().getResourceAsStream(
                 "/com/github/terma/jenkins/githubprcoveragestatus/Icon/icon.svg"));
 
-        final Message message = new Message(coverage, masterCoverage);
+        final Message message = new Message(coverage, masterCoverage, branchName, changeTarget);
         svg = StringUtils.replace(svg, "{{ message }}", message.forIcon());
 
         final int coveragePercent = Percent.of(coverage);

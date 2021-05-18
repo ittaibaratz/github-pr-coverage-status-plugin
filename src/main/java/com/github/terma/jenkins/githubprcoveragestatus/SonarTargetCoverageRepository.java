@@ -36,7 +36,7 @@ import static com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKN
 import static org.apache.commons.httpclient.HttpStatus.SC_BAD_REQUEST;
 
 @SuppressWarnings("WeakerAccess")
-public class SonarMasterCoverageRepository implements MasterCoverageRepository {
+public class SonarTargetCoverageRepository implements TargetCoverageRepository {
 
     private static final String SONAR_SEARCH_PROJECTS_API_PATH = "/api/projects/index";
     private static final String SONAR_COMPONENT_MEASURE_API_PATH = "/api/measures/component";
@@ -48,7 +48,7 @@ public class SonarMasterCoverageRepository implements MasterCoverageRepository {
     private final ObjectMapper objectMapper = new ObjectMapper().disable(FAIL_ON_UNKNOWN_PROPERTIES);
     private PrintStream buildLog;
 
-    public SonarMasterCoverageRepository(String sonarUrl, String login, String password, PrintStream buildLog) {
+    public SonarTargetCoverageRepository(String sonarUrl, String login, String password, PrintStream buildLog) {
         this.sonarUrl = sonarUrl;
         this.login = login;
         this.buildLog = buildLog;
@@ -59,14 +59,14 @@ public class SonarMasterCoverageRepository implements MasterCoverageRepository {
     }
 
     @Override
-    public float get(final String gitHubRepoUrl) {
+    public float get(final String gitHubRepoUrl, String changeTarget) {
         final String repoName = GitUtils.getRepoName(gitHubRepoUrl);
         log("Getting coverage for Git Repo URL: %s by repo name: %s", gitHubRepoUrl, repoName);
         try {
             final SonarProject sonarProject = getSonarProject(repoName);
             return getCoverageMeasure(sonarProject);
         } catch (Exception e) {
-            log("Failed to get master coverage for %s", gitHubRepoUrl);
+            log("Failed to get branch coverage for %s", gitHubRepoUrl);
             log("Exception message '%s'", e);
             e.printStackTrace(buildLog);
             return 0;

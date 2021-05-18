@@ -19,22 +19,22 @@ package com.github.terma.jenkins.githubprcoveragestatus;
 
 import java.io.PrintStream;
 
-public class BuildMasterCoverageRepository implements MasterCoverageRepository {
+public class BuildTargetCoverageRepository implements TargetCoverageRepository {
 
     private final PrintStream buildLog;
 
-    public BuildMasterCoverageRepository(final PrintStream buildLog) {
+    public BuildTargetCoverageRepository(final PrintStream buildLog) {
         this.buildLog = buildLog;
     }
 
     @Override
-    public float get(final String gitHubRepoUrl) {
+    public float get(final String gitHubRepoUrl, String changeTarget) {
         if (gitHubRepoUrl == null) return 0;
-        final Float coverage = Configuration.DESCRIPTOR.getCoverageByRepo().get(gitHubRepoUrl);
+        final Float coverage = Configuration.DESCRIPTOR.getCoverageByRepo().get(gitHubRepoUrl + "-" + changeTarget);
         if (coverage == null) {
-            buildLog.println("Can't find master coverage repository: " + gitHubRepoUrl
+            buildLog.println("Can't find target coverage repository: " + gitHubRepoUrl + "-" + changeTarget
                     + " in stored: " + Configuration.DESCRIPTOR.getCoverageByRepo() + "\n"
-                    + "Make sure that you have run build with step: " + MasterCoverageAction.DISPLAY_NAME);
+                    + "Make sure that you have run build with step: " + BranchCoverageAction.DISPLAY_NAME);
             return 0;
         }
         return coverage;

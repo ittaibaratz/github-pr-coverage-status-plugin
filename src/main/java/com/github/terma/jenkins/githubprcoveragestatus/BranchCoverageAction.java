@@ -38,16 +38,16 @@ import java.io.PrintStream;
 import java.util.Map;
 
 /**
- * Record coverage of Jenkins Build and assume it as master coverage.
- * Master coverage will be used to compare Pull Request coverage and provide status message in Pull Request.
+ * Record branch coverage of Jenkins Build.
+ * Branch coverage will be used to compare Pull Request coverage and provide status message in Pull Request.
  * Optional step as coverage could be taken from Sonar. Take a look on {@link Configuration}
  *
  * @see CompareCoverageAction
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
+public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
 
-    public static final String DISPLAY_NAME = "Record Master Coverage";
+    public static final String DISPLAY_NAME = "Record Branch Coverage";
     private static final long serialVersionUID = 1L;
 
 
@@ -55,7 +55,7 @@ public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
     private String jacocoCounterType;
 
     @DataBoundConstructor
-    public MasterCoverageAction() {
+    public BranchCoverageAction() {
 
     }
 
@@ -86,13 +86,16 @@ public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
 
         final PrintStream buildLog = listener.getLogger();
         final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
+        final String gitBranch = PrIdAndUrlUtils.getGitBranch(scmVars, build, listener);
+        buildLog.println("Git URL: " + gitUrl);
+        buildLog.println("Git Branch: " + gitBranch);
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
-        final float masterCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
+        final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
                 .get(workspace);
-        buildLog.println("Master coverage " + Percent.toWholeString(masterCoverage));
-        Configuration.setMasterCoverage(gitUrl, masterCoverage);
+        buildLog.println("Branch coverage " + Percent.toWholeString(branchCoverage));
+        Configuration.setBranchCoverage(gitUrl, gitBranch, branchCoverage);
     }
 
     @Override

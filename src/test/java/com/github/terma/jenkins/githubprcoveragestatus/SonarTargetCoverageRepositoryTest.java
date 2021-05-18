@@ -17,14 +17,16 @@ import static com.google.common.base.Charsets.UTF_8;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-public class SonarMasterCoverageRepositoryTest {
+public class SonarTargetCoverageRepositoryTest {
 
     private static final String GIT_REPO_NAME = "my-project";
     private static final String GIT_REPO_URL = "http://test.com/user/" + GIT_REPO_NAME;
+    private static final String CHANGE_TARGET = "master";
+
     @ClassRule
     public static WireMockRule wireMockRule = new WireMockRule(wireMockConfig().port(0));
 
-    private SonarMasterCoverageRepository sonarMasterCoverageRepository;
+    private SonarTargetCoverageRepository sonarTargetCoverageRepository;
     private ByteArrayOutputStream buildLogOutputStream;
 
     @After
@@ -46,7 +48,7 @@ public class SonarMasterCoverageRepositoryTest {
 
         givenMeasureResponse();
 
-        final float coverage = sonarMasterCoverageRepository.get(GIT_REPO_URL);
+        final float coverage = sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET);
         assertThat(coverage, is(0.953f));
     }
 
@@ -57,7 +59,7 @@ public class SonarMasterCoverageRepositoryTest {
         givenProjectResponseWithMultipleMatches();
         givenMeasureResponse();
 
-        final float coverage = sonarMasterCoverageRepository.get(GIT_REPO_URL);
+        final float coverage = sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET);
         assertThat(coverage, is(0.953f));
     }
 
@@ -67,7 +69,7 @@ public class SonarMasterCoverageRepositoryTest {
 
         givenProjectResponseWithoutMatch();
 
-        assertThat(sonarMasterCoverageRepository.get(GIT_REPO_URL), is(0f));
+        assertThat(sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET), is(0f));
     }
 
     @Test
@@ -77,12 +79,12 @@ public class SonarMasterCoverageRepositoryTest {
         givenProjectResponseWithSingleMatch(null, null);
         givenNotFoundMeasureResponse();
 
-        assertThat(sonarMasterCoverageRepository.get(GIT_REPO_URL), is(0f));
+        assertThat(sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET), is(0f));
     }
 
     private void givenCoverageRepository(final String login, String password) {
         buildLogOutputStream = new ByteArrayOutputStream();
-        sonarMasterCoverageRepository = new SonarMasterCoverageRepository("http://localhost:" + wireMockRule.port(),
+        sonarTargetCoverageRepository = new SonarTargetCoverageRepository("http://localhost:" + wireMockRule.port(),
                 login, password, new PrintStream(buildLogOutputStream, true));
     }
 
@@ -122,7 +124,7 @@ public class SonarMasterCoverageRepositoryTest {
     private void givenMeasureResponse() throws IOException {
         wireMockRule.stubFor(get(urlPathEqualTo("/api/measures/component"))
                 .withQueryParam("componentKey", equalTo("my-project:origin/master"))
-                .withQueryParam("metricKeys", equalTo(SonarMasterCoverageRepository.SONAR_OVERALL_LINE_COVERAGE_METRIC_NAME))
+                .withQueryParam("metricKeys", equalTo(SonarTargetCoverageRepository.SONAR_OVERALL_LINE_COVERAGE_METRIC_NAME))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(getResponseBodyFromFile("measureFound.json"))
@@ -133,7 +135,7 @@ public class SonarMasterCoverageRepositoryTest {
     private void givenNotFoundMeasureResponse() throws IOException {
         wireMockRule.stubFor(get(urlPathEqualTo("/api/measures/component"))
                 .withQueryParam("componentKey", equalTo("my-project:origin/master"))
-                .withQueryParam("metricKeys", equalTo(SonarMasterCoverageRepository.SONAR_OVERALL_LINE_COVERAGE_METRIC_NAME))
+                .withQueryParam("metricKeys", equalTo(SonarTargetCoverageRepository.SONAR_OVERALL_LINE_COVERAGE_METRIC_NAME))
                 .willReturn(aResponse()
                         .withStatus(404)
                         .withBody(getResponseBodyFromFile("metricNotFound.json"))

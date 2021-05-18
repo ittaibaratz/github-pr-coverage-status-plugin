@@ -31,18 +31,24 @@ class Message {
     private static final String COLOR_GREEN = "brightgreen";
 
     private final float coverage;
-    private final float masterCoverage;
+    private final float targetCoverage;
+    private final String changeTarget;
+    private final String branchName;
 
-    public Message(float coverage, float masterCoverage) {
+    public Message(float coverage, float targetCoverage, String branchName, String changeTarget) {
         this.coverage = Percent.roundFourAfterDigit(coverage);
-        this.masterCoverage = Percent.roundFourAfterDigit(masterCoverage);
+        this.targetCoverage = Percent.roundFourAfterDigit(targetCoverage);
+        this.changeTarget = changeTarget;
+        this.branchName = branchName;
     }
 
     public String forConsole() {
-        return String.format("Coverage %s changed %s vs master %s",
+        return String.format("%s coverage %s changed %s vs %s coverage %s",
+                this.branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                this.changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
     }
 
     public String forComment(
@@ -54,17 +60,21 @@ class Message {
             return "[![" + icon + "](" + shieldIoUrl(icon, yellowThreshold, greenThreshold) + ")](" + buildUrl + ")";
         } else {
             return "[![" + icon + "](" + jenkinsUrl + "/coverage-status-icon/" +
-                    "?coverage=" + coverage +
-                    "&masterCoverage=" + masterCoverage +
+                    "?branchName=" + this.branchName +
+                    "&coverage=" + coverage +
+                    "&changeTarget=" + changeTarget +
+                    "&targetCoverage=" + targetCoverage +
                     ")](" + buildUrl + ")";
         }
     }
 
     public String forStatusCheck() {
-        return String.format("Coverage %s changed %s vs master %s",
+        return String.format("%s coverage %s changed %s vs %s coverage %s",
+                this.branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                this.changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
     }
 
     private String shieldIoUrl(String icon, final int yellowThreshold, final int greenThreshold) {
@@ -90,12 +100,14 @@ class Message {
     }
 
     /**
-     * Example: 92% (+23%) vs master 70%
+     * Example: PR-123 92% (+23%) vs master 70%
      */
     public String forIcon() {
-        return String.format("%s (%s) vs master %s",
+        return String.format("%s %s (%s) vs %s %s",
+                this.branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                this.changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
     }
 }

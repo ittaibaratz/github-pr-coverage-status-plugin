@@ -28,7 +28,7 @@ f.section(title: descriptor.displayName) {
         f.textbox()
     }
 
-    f.entry(field: "useSonarForMasterCoverage", title: _("Use Sonar for master coverage")) {
+    f.entry(field: "useSonarForTargetCoverage", title: _("Use Sonar for target coverage")) {
         f.checkbox()
     }
 

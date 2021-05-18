@@ -48,11 +48,11 @@ import java.util.Map;
  * Workflow:
  * <ul>
  * <li>find coverage of current build and assume it as pull request coverage</li>
- * <li>find master coverage for repository URL could be taken by {@link MasterCoverageAction} or Sonar {@link Configuration}</li>
+ * <li>find branch coverage for repository URL could be taken by {@link BranchCoverageAction} or Sonar {@link Configuration}</li>
  * <li>Publish nice status message to GitHub PR page</li>
  * </ul>
  *
- * @see MasterCoverageAction
+ * @see BranchCoverageAction
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
@@ -130,20 +130,25 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         final int prId = PrIdAndUrlUtils.getPrId(scmVars, build, listener);
         final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
-
-        buildLog.println(BUILD_LOG_PREFIX + "getting master coverage...");
-        MasterCoverageRepository masterCoverageRepository = ServiceRegistry
-                .getMasterCoverageRepository(buildLog, sonarLogin, sonarPassword);
+        final String changeTarget = PrIdAndUrlUtils.getChangeTarget(scmVars, build, listener);
+        final String branchName = PrIdAndUrlUtils.getBranchName(scmVars, build, listener);
+        buildLog.println(BUILD_LOG_PREFIX + "Git URL: " + gitUrl);
+        buildLog.println(BUILD_LOG_PREFIX + "Change Target: " + changeTarget);
+        buildLog.println(BUILD_LOG_PREFIX + "Branch Name: " + branchName);
         final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
-        final float masterCoverage = masterCoverageRepository.get(gitUrl);
-        buildLog.println(BUILD_LOG_PREFIX + "master coverage: " + masterCoverage);
 
-        buildLog.println(BUILD_LOG_PREFIX + "collecting coverage...");
+        buildLog.println(BUILD_LOG_PREFIX + "getting target branch coverage...");
+        TargetCoverageRepository targetCoverageRepository = ServiceRegistry
+                .getTargetCoverageRepository(buildLog, sonarLogin, sonarPassword);
+        final float targetCoverage = targetCoverageRepository.get(gitUrl, changeTarget);
+        buildLog.println(BUILD_LOG_PREFIX + "target branch(" + changeTarget + ") coverage: " + targetCoverage);
+
+        buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
                 jacocoCoverageCounter).get(workspace);
-        buildLog.println(BUILD_LOG_PREFIX + "build coverage: " + coverage);
+        buildLog.println(BUILD_LOG_PREFIX + "build branch(" + branchName + ") coverage: " + coverage);
 
-        final Message message = new Message(coverage, masterCoverage);
+        final Message message = new Message(coverage, targetCoverage, branchName, changeTarget);
         buildLog.println(BUILD_LOG_PREFIX + message.forConsole());
 
         final String buildUrl = Utils.getBuildUrl(build, listener);
@@ -156,7 +161,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
             publishComment(message, buildUrl, jenkinsUrl, settingsRepository, gitHubRepository, prId, listener);
         } else {
             buildLog.println(BUILD_LOG_PREFIX + "publishing result as status check");
-            publishStatusCheck(message, gitHubRepository, prId, masterCoverage, coverage, buildUrl, listener);
+            publishStatusCheck(message, gitHubRepository, prId, targetCoverage, coverage, buildUrl, listener);
         }
     }
 

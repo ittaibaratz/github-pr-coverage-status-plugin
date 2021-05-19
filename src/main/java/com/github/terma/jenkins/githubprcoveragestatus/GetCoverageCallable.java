@@ -35,7 +35,7 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
-    private PrintStream buildLog;
+    private static PrintStream LOG;
 
     GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
         this.disableSimpleCov = disableSimpleCov;
@@ -50,14 +50,13 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         for (String file : files) {
             cov.add(parser.get(new File(ds.getBasedir(), file).getAbsolutePath()));
         }
-        this.buildLog.println("path: " + path + ", coverage: " + cov);
+        if(LOG!=null) LOG.println("path: " + path + ", coverage: " + cov.toString());
         return cov;
     }
 
     @Override
     public float get(final FilePath workspace, PrintStream buildLog) throws IOException, InterruptedException {
-        this.buildLog = buildLog;
-        buildLog.println("workspace: " + workspace.getRemote());
+        LOG = buildLog;
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }

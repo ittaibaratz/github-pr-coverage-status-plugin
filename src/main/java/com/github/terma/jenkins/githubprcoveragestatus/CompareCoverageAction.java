@@ -130,6 +130,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         final int prId = PrIdAndUrlUtils.getPrId(scmVars, build, listener);
         final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
+        buildLog.println(BUILD_LOG_PREFIX + "gitUrl: " + gitUrl);
 
         buildLog.println(BUILD_LOG_PREFIX + "getting master coverage...");
         MasterCoverageRepository masterCoverageRepository = ServiceRegistry
@@ -140,7 +141,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter).get(workspace);
+                jacocoCoverageCounter).get(workspace, buildLog);
         buildLog.println(BUILD_LOG_PREFIX + "build coverage: " + coverage);
 
         final String targetBranch = Utils.getTargetBranch(build, listener);

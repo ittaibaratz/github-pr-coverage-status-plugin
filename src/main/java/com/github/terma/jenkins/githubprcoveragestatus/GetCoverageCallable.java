@@ -26,6 +26,7 @@ import org.apache.tools.ant.types.FileSet;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,7 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
+    private PrintStream buildLog;
 
     GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
         this.disableSimpleCov = disableSimpleCov;
@@ -48,11 +50,14 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         for (String file : files) {
             cov.add(parser.get(new File(ds.getBasedir(), file).getAbsolutePath()));
         }
+        this.buildLog.println("path: " + path + ", coverage: " + cov);
         return cov;
     }
 
     @Override
-    public float get(final FilePath workspace) throws IOException, InterruptedException {
+    public float get(final FilePath workspace, PrintStream buildLog) throws IOException, InterruptedException {
+        this.buildLog = buildLog;
+        buildLog.println("workspace: " + workspace.getRemote());
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }
@@ -63,6 +68,7 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
     public Float invoke(final File ws, final VirtualChannel channel) throws IOException {
         final List<Float> cov = new ArrayList<Float>();
         cov.addAll(getFloats(ws, "**/cobertura.xml", new CoberturaParser()));
+
         cov.addAll(getFloats(ws, "**/cobertura-coverage.xml", new CoberturaParser()));
         cov.addAll(getFloats(ws, "**/jacoco.xml", new JacocoParser(jacocoCounterType)));
         //default for gradle

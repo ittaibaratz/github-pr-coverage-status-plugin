@@ -47,10 +47,12 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         DirectoryScanner ds = fs.getDirectoryScanner();
         String[] files = ds.getIncludedFiles();
         List<Float> cov = new ArrayList<Float>();
+        float coverage;
         for (String file : files) {
-            cov.add(parser.get(new File(ds.getBasedir(), file).getAbsolutePath()));
+            coverage = parser.get(new File(ds.getBasedir(), file).getAbsolutePath());
+            if(LOG!=null) LOG.println("file: " + file + ", coverage: " + coverage);
+            cov.add(coverage);
         }
-        if(LOG!=null) LOG.println("path: " + path + ", coverage: " + cov.toString());
         return cov;
     }
 

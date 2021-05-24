@@ -92,6 +92,7 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
+
         final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
                 .get(workspace);
         buildLog.println("Branch coverage " + Percent.toWholeString(branchCoverage));

@@ -62,18 +62,32 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     private static final long serialVersionUID = 1L;
     private String sonarLogin;
     private String sonarPassword;
-    private Map<String, String> scmVars;
-    private String jacocoCoverageCounter;
     private String publishResultAs;
+    private String jacocoCoverageCounter;
+    private Map<String, String> scmVars;
+    private CoverageMetaData coverageMetaData;
 
     @DataBoundConstructor
     public CompareCoverageAction() {
     }
 
-    @DataBoundSetter
-    public void setPublishResultAs(String publishResultAs) {
-        this.publishResultAs = publishResultAs;
+    public String getPublishResultAs() {
+        return publishResultAs;
     }
+
+    public String getJacocoCoverageCounter() {
+        return jacocoCoverageCounter;
+    }
+
+    // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
+    public Map<String, String> getScmVars() {
+        return scmVars;
+    }
+
+    public CoverageMetaData getCoverageMetaData() {
+        return coverageMetaData;
+    }
+
 
     @DataBoundSetter
     public void setSonarLogin(String sonarLogin) {
@@ -85,9 +99,14 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         this.sonarPassword = sonarPassword;
     }
 
-    // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
-    public Map<String, String> getScmVars() {
-        return scmVars;
+    @DataBoundSetter
+    public void setPublishResultAs(String publishResultAs) {
+        this.publishResultAs = publishResultAs;
+    }
+
+    @DataBoundSetter
+    public void setJacocoCoverageCounter(String jacocoCoverageCounter) {
+        this.jacocoCoverageCounter = jacocoCoverageCounter;
     }
 
     @DataBoundSetter
@@ -96,17 +115,10 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setJacocoCoverageCounter(String jacocoCoverageCounter) {
-        this.jacocoCoverageCounter = jacocoCoverageCounter;
+    public void setCoverageMetaData(CoverageMetaData coverageMetaData) {
+        this.coverageMetaData = coverageMetaData;
     }
 
-    public String getPublishResultAs() {
-        return publishResultAs;
-    }
-
-    public String getJacocoCoverageCounter() {
-        return jacocoCoverageCounter;
-    }
 
     // todo show message that addition comment in progress as it could take a while
     @SuppressWarnings("NullableProblems")
@@ -135,18 +147,22 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         buildLog.println(BUILD_LOG_PREFIX + "Git URL: " + gitUrl);
         buildLog.println(BUILD_LOG_PREFIX + "Change Target: " + changeTarget);
         buildLog.println(BUILD_LOG_PREFIX + "Branch Name: " + branchName);
+
+        coverageMetaData.setGitUrl(gitUrl);
+        coverageMetaData.setGitBranch(changeTarget);
+
         final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
 
-        buildLog.println(BUILD_LOG_PREFIX + "getting target branch coverage...");
+        buildLog.println(BUILD_LOG_PREFIX + "getting target coverage...");
         TargetCoverageRepository targetCoverageRepository = ServiceRegistry
                 .getTargetCoverageRepository(buildLog, sonarLogin, sonarPassword);
         final float targetCoverage = targetCoverageRepository.get(gitUrl, changeTarget);
-        buildLog.println(BUILD_LOG_PREFIX + "target branch(" + changeTarget + ") coverage: " + targetCoverage);
+        buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + targetCoverage);
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter).get(workspace);
-        buildLog.println(BUILD_LOG_PREFIX + "build branch(" + branchName + ") coverage: " + coverage);
+                jacocoCoverageCounter, coverageMetaData.getReportMetaDataList()).get(workspace);
+        buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + coverage);
 
         final Message message = new Message(coverage, targetCoverage, branchName, changeTarget);
         buildLog.println(BUILD_LOG_PREFIX + message.forConsole());

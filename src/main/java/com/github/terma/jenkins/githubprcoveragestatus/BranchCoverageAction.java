@@ -50,18 +50,31 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
     public static final String DISPLAY_NAME = "Record Branch Coverage";
     private static final long serialVersionUID = 1L;
 
-
-    private Map<String, String> scmVars;
     private String jacocoCounterType;
+    private Map<String, String> scmVars;
+    private CoverageMetaData coverageMetaData;
 
     @DataBoundConstructor
     public BranchCoverageAction() {
 
     }
 
+    public String getJacocoCounterType() {
+        return jacocoCounterType;
+    }
+
     // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
     public Map<String, String> getScmVars() {
         return scmVars;
+    }
+
+    public CoverageMetaData getCoverageMetaData() {
+        return coverageMetaData;
+    }
+
+    @DataBoundSetter
+    public void setJacocoCounterType(String jacocoCounterType) {
+        this.jacocoCounterType = jacocoCounterType;
     }
 
     @DataBoundSetter
@@ -70,13 +83,10 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setJacocoCounterType(String jacocoCounterType) {
-        this.jacocoCounterType = jacocoCounterType;
+    public void setCoverageMetaData(CoverageMetaData coverageMetaData) {
+        this.coverageMetaData = coverageMetaData;
     }
 
-    public String getJacocoCounterType() {
-        return jacocoCounterType;
-    }
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -89,11 +99,13 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
         final String gitBranch = PrIdAndUrlUtils.getGitBranch(scmVars, build, listener);
         buildLog.println("Git URL: " + gitUrl);
         buildLog.println("Git Branch: " + gitBranch);
+        coverageMetaData.setGitUrl(gitUrl);
+        coverageMetaData.setGitBranch(gitBranch);
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
 
-        final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
+        final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, coverageMetaData.getReportMetaDataList())
                 .get(workspace);
         buildLog.println("Branch coverage " + Percent.toWholeString(branchCoverage));
         Configuration.setBranchCoverage(gitUrl, gitBranch, branchCoverage);

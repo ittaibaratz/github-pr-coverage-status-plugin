@@ -32,14 +32,14 @@ class Message {
 
     private final float coverage;
     private final float targetCoverage;
-    private final String changeTarget;
     private final String branchName;
+    private final String changeTarget;
 
     public Message(float coverage, float targetCoverage, String branchName, String changeTarget) {
         this.coverage = Percent.roundFourAfterDigit(coverage);
         this.targetCoverage = Percent.roundFourAfterDigit(targetCoverage);
-        this.changeTarget = changeTarget;
         this.branchName = branchName;
+        this.changeTarget = changeTarget;
     }
 
     public String forConsole() {
@@ -100,7 +100,7 @@ class Message {
     }
 
     /**
-     * Example: PR-123 92% (+23%) vs master 70%
+     * Example: PR-12 92% (+23%) vs master 70%
      */
     public String forIcon() {
         return String.format("%s %s (%s) vs %s %s",

@@ -18,6 +18,7 @@ limitations under the License.
 package com.github.terma.jenkins.githubprcoveragestatus;
 
 import java.io.PrintStream;
+import java.util.List;
 
 public class ServiceRegistry {
 
@@ -53,10 +54,11 @@ public class ServiceRegistry {
 
     public static CoverageRepository getCoverageRepository(
             final boolean disableSimpleCov,
-            final String jacocoCoverageCounter
+            final String jacocoCoverageCounter,
+            List<ReportMetaData> reportsMetaData
     ) {
         return coverageRepository != null ? coverageRepository
-                : new GetCoverageCallable(disableSimpleCov, jacocoCoverageCounter);
+                : new GetCoverageCallable(disableSimpleCov, jacocoCoverageCounter, reportsMetaData);
     }
 
     public static void setCoverageRepository(CoverageRepository coverageRepository) {

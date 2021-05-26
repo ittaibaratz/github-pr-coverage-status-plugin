@@ -34,10 +34,12 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
+    List<ReportMetaData> reportsMetaData;
 
-    GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
+    GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType, List<ReportMetaData> reportsMetaData) {
         this.disableSimpleCov = disableSimpleCov;
         this.jacocoCounterType = jacocoCounterType;
+        this.reportsMetaData = reportsMetaData;
     }
 
     private List<Float> getFloats(File ws, String path, CoverageReportParser parser) {
@@ -56,7 +58,8 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }
-        return workspace.act(new GetCoverageCallable(disableSimpleCov, jacocoCounterType));
+        return workspace.act(new GetCoverageCallable(disableSimpleCov, jacocoCounterType, reportsMetaData));
+//        return workspace.act(this);
     }
 
     @Override
@@ -67,10 +70,10 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         cov.addAll(getFloats(ws, "**/jacoco.xml", new JacocoParser(jacocoCounterType)));
         //default for gradle
         cov.addAll(getFloats(ws, "**/jacocoTestReport.xml", new JacocoParser(jacocoCounterType)));
-        cov.addAll(getFloats(ws, "**/clover.xml", new CloverParser()));
-        if (!disableSimpleCov) {
-            cov.addAll(getFloats(ws, "**/coverage.json", new SimpleCovParser()));
-        }
+//        cov.addAll(getFloats(ws, "**/clover.xml", new CloverParser()));
+//        if (!disableSimpleCov) {
+//            cov.addAll(getFloats(ws, "**/coverage.json", new SimpleCovParser()));
+//        }
 
         float s = 0;
         for (float v : cov) {

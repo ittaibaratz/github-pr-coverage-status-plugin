@@ -48,7 +48,7 @@ public class SonarTargetCoverageRepositoryTest {
 
         givenMeasureResponse();
 
-        final float coverage = sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET);
+        final float coverage = sonarTargetCoverageRepository.get(new CoverageMetaData(GIT_REPO_URL, CHANGE_TARGET, null));
         assertThat(coverage, is(0.953f));
     }
 
@@ -59,7 +59,7 @@ public class SonarTargetCoverageRepositoryTest {
         givenProjectResponseWithMultipleMatches();
         givenMeasureResponse();
 
-        final float coverage = sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET);
+        final float coverage = sonarTargetCoverageRepository.get(new CoverageMetaData(GIT_REPO_URL, CHANGE_TARGET, null));
         assertThat(coverage, is(0.953f));
     }
 
@@ -69,7 +69,7 @@ public class SonarTargetCoverageRepositoryTest {
 
         givenProjectResponseWithoutMatch();
 
-        assertThat(sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET), is(0f));
+        assertThat(sonarTargetCoverageRepository.get(new CoverageMetaData(GIT_REPO_URL, CHANGE_TARGET, null)), is(0f));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class SonarTargetCoverageRepositoryTest {
         givenProjectResponseWithSingleMatch(null, null);
         givenNotFoundMeasureResponse();
 
-        assertThat(sonarTargetCoverageRepository.get(GIT_REPO_URL, CHANGE_TARGET), is(0f));
+        assertThat(sonarTargetCoverageRepository.get(new CoverageMetaData(GIT_REPO_URL, CHANGE_TARGET, null)), is(0f));
     }
 
     private void givenCoverageRepository(final String login, String password) {

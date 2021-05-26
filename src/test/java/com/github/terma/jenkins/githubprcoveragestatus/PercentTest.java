@@ -23,13 +23,8 @@ import org.junit.Test;
 public class PercentTest {
 
     @Test
-    public void toWholeString() {
-        Assert.assertEquals("-1%", Percent.toWholeString(-0.007f));
-    }
-
-    @Test
     public void toString1() {
-        Assert.assertEquals("-0.7%", Percent.toString(-0.007f));
+        Assert.assertEquals("-0.72%", Percent.toString(-0.0072f));
     }
 
 }

@@ -65,7 +65,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     private String publishResultAs;
     private String jacocoCoverageCounter;
     private Map<String, String> scmVars;
-    private CoverageMetaData coverageMetaData;
+    private List<ReportMetaData> reportMetaDataList;
 
     @DataBoundConstructor
     public CompareCoverageAction() {
@@ -84,8 +84,8 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         return scmVars;
     }
 
-    public CoverageMetaData getCoverageMetaData() {
-        return coverageMetaData;
+    public List<ReportMetaData> getReportMetaDataList() {
+        return reportMetaDataList;
     }
 
 
@@ -115,8 +115,8 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setCoverageMetaData(CoverageMetaData coverageMetaData) {
-        this.coverageMetaData = coverageMetaData;
+    public void setReportMetaDataList(List<ReportMetaData> reportMetaDataList) {
+        this.reportMetaDataList = reportMetaDataList;
     }
 
 
@@ -148,20 +148,20 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         buildLog.println(BUILD_LOG_PREFIX + "Change Target: " + changeTarget);
         buildLog.println(BUILD_LOG_PREFIX + "Branch Name: " + branchName);
 
-        coverageMetaData.setGitUrl(gitUrl);
-        coverageMetaData.setGitBranch(changeTarget);
+        // will use it for storing data in Configuration.Map
+        CoverageMetaData coverageMetaData = new CoverageMetaData(gitUrl, changeTarget, reportMetaDataList);
+        buildLog.println(BUILD_LOG_PREFIX + "CoverageMetaData: " + coverageMetaData);
 
         final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
 
         buildLog.println(BUILD_LOG_PREFIX + "getting target coverage...");
-        TargetCoverageRepository targetCoverageRepository = ServiceRegistry
-                .getTargetCoverageRepository(buildLog, sonarLogin, sonarPassword);
-        final float targetCoverage = targetCoverageRepository.get(gitUrl, changeTarget);
+        final float targetCoverage = ServiceRegistry
+                .getTargetCoverageRepository(buildLog, sonarLogin, sonarPassword).get(coverageMetaData);
         buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + targetCoverage);
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter, coverageMetaData.getReportMetaDataList()).get(workspace);
+                jacocoCoverageCounter, reportMetaDataList).get(workspace);
         buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + coverage);
 
         final Message message = new Message(coverage, targetCoverage, branchName, changeTarget);
@@ -221,7 +221,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
                     commits.get(commits.size() - 1).getSha(),
                     coverage < targetCoverage ? GHCommitState.FAILURE : GHCommitState.SUCCESS,
                     buildUrl,
-                    message.forStatusCheck()
+                    text
             );
         } catch (Exception e) {
             PrintWriter pw = listener.error("Couldn't add status check to pull request #" + prId + "!");

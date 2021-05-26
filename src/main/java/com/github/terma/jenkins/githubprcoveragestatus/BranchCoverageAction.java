@@ -35,6 +35,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -52,7 +53,7 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
 
     private String jacocoCounterType;
     private Map<String, String> scmVars;
-    private CoverageMetaData coverageMetaData;
+    private List<ReportMetaData> reportMetaDataList;
 
     @DataBoundConstructor
     public BranchCoverageAction() {
@@ -68,8 +69,8 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
         return scmVars;
     }
 
-    public CoverageMetaData getCoverageMetaData() {
-        return coverageMetaData;
+    public List<ReportMetaData> getReportMetaDataList() {
+        return reportMetaDataList;
     }
 
     @DataBoundSetter
@@ -83,8 +84,8 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setCoverageMetaData(CoverageMetaData coverageMetaData) {
-        this.coverageMetaData = coverageMetaData;
+    public void setReportMetaDataList(List<ReportMetaData> reportMetaDataList) {
+        this.reportMetaDataList = reportMetaDataList;
     }
 
 
@@ -99,16 +100,17 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
         final String gitBranch = PrIdAndUrlUtils.getGitBranch(scmVars, build, listener);
         buildLog.println("Git URL: " + gitUrl);
         buildLog.println("Git Branch: " + gitBranch);
-        coverageMetaData.setGitUrl(gitUrl);
-        coverageMetaData.setGitBranch(gitBranch);
+        // will use it for storing data in Configuration.Map
+        CoverageMetaData coverageMetaData = new CoverageMetaData(gitUrl, gitBranch, reportMetaDataList);
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
 
-        final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, coverageMetaData.getReportMetaDataList())
+        final float branchCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, reportMetaDataList)
                 .get(workspace);
-        buildLog.println("Branch coverage " + Percent.toWholeString(branchCoverage));
-        Configuration.setBranchCoverage(gitUrl, gitBranch, branchCoverage);
+        buildLog.println("Branch coverage " + Percent.toString(branchCoverage));
+//        Configuration.setBranchCoverage(gitUrl, gitBranch, branchCoverage);
+        Configuration.setBranchCoverage(coverageMetaData, branchCoverage);
     }
 
     @Override

@@ -129,7 +129,7 @@ public class PrIdAndUrlUtils {
 
     /**
      * This method is used to get BRANCH_NAME property.
-     * This may have the same name as a git branch, but might also be called PR-123 or similar
+     * This may have the same name as a git branch, but might also be called PR-12 or similar
      * @param scmVars
      * @param build
      * @param listener

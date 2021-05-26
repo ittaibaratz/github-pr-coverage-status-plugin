@@ -28,12 +28,12 @@ public class BuildTargetCoverageRepository implements TargetCoverageRepository {
     }
 
     @Override
-    public float get(final String gitHubRepoUrl, String changeTarget) {
-        if (gitHubRepoUrl == null) return 0;
-        final Float coverage = Configuration.DESCRIPTOR.getCoverageByRepo().get(gitHubRepoUrl + "-" + changeTarget);
+    public float get(CoverageMetaData coverageMetaData) {
+        if (coverageMetaData == null) return 0;
+        final Float coverage = Configuration.DESCRIPTOR.getCoverageByCoverageMetaData().get(coverageMetaData);
         if (coverage == null) {
-            buildLog.println("Can't find target coverage repository: " + gitHubRepoUrl + "-" + changeTarget
-                    + " in stored: " + Configuration.DESCRIPTOR.getCoverageByRepo() + "\n"
+            buildLog.println("Can't find target coverage repository: " + coverageMetaData
+                    + " in stored: " + Configuration.DESCRIPTOR.getCoverageByCoverageMetaData() + "\n"
                     + "Make sure that you have run build with step: " + BranchCoverageAction.DISPLAY_NAME);
             return 0;
         }

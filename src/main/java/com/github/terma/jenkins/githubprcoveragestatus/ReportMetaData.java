@@ -1,6 +1,7 @@
 package com.github.terma.jenkins.githubprcoveragestatus;
 
 import java.util.List;
+import java.util.Objects;
 
 public class ReportMetaData {
     private String key;
@@ -44,5 +45,18 @@ public class ReportMetaData {
                 ", includePaths=" + includePaths +
                 ", excludePaths=" + excludePaths +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        ReportMetaData that = (ReportMetaData) o;
+        return key.equals(that.key) && includePaths.equals(that.includePaths) && excludePaths.equals(that.excludePaths);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, includePaths, excludePaths);
     }
 }

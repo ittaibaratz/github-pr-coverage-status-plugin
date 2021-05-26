@@ -59,14 +59,14 @@ public class SonarTargetCoverageRepository implements TargetCoverageRepository {
     }
 
     @Override
-    public float get(final String gitHubRepoUrl, String changeTarget) {
-        final String repoName = GitUtils.getRepoName(gitHubRepoUrl);
-        log("Getting coverage for Git Repo URL: %s by repo name: %s", gitHubRepoUrl, repoName);
+    public float get(CoverageMetaData coverageMetaData) {
+        final String repoName = GitUtils.getRepoName(coverageMetaData.getGitUrl());
+        log("Getting coverage for Git Repo URL: %s by repo name: %s", coverageMetaData.getGitUrl(), repoName);
         try {
             final SonarProject sonarProject = getSonarProject(repoName);
             return getCoverageMeasure(sonarProject);
         } catch (Exception e) {
-            log("Failed to get branch coverage for %s", gitHubRepoUrl);
+            log("Failed to get branch coverage for %s", coverageMetaData.getGitUrl());
             log("Exception message '%s'", e);
             e.printStackTrace(buildLog);
             return 0;

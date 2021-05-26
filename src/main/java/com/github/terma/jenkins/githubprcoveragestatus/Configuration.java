@@ -77,8 +77,8 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         return DESCRIPTOR.isUseSonarForTargetCoverage();
     }
 
-    public static void setBranchCoverage(final String repo, final String branch, final float coverage) {
-        DESCRIPTOR.set(repo + "-" + branch, coverage);
+    public static void setBranchCoverage(CoverageMetaData coverageMetaData, final float coverage) {
+        DESCRIPTOR.set(coverageMetaData, coverage);
     }
 
     @Override
@@ -92,7 +92,7 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         private static final int DEFAULT_YELLOW_THRESHOLD = 80;
         private static final int DEFAULT_GREEN_THRESHOLD = 90;
 
-        private final Map<String, Float> coverageByRepo = new ConcurrentHashMap<String, Float>();
+        private final Map<CoverageMetaData, Float> coverageByCoverageMetaData = new ConcurrentHashMap<CoverageMetaData, Float>();
 
         private boolean disableSimpleCov;
         private String gitHubApiUrl;
@@ -118,12 +118,12 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         }
 
         @Nonnull
-        public Map<String, Float> getCoverageByRepo() {
-            return coverageByRepo;
+        public Map<CoverageMetaData, Float> getCoverageByCoverageMetaData() {
+            return coverageByCoverageMetaData;
         }
 
-        public void set(String repo, float coverage) {
-            coverageByRepo.put(repo, coverage);
+        public void set(CoverageMetaData coverageMetaData, float coverage) {
+            coverageByCoverageMetaData.put(coverageMetaData, coverage);
             save();
         }
 

@@ -91,7 +91,10 @@ class Message {
     private String getColor(int yellowThreshold, int greenThreshold) {
         String color = COLOR_GREEN;
         final int coveragePercent = Percent.of(coverage);
-        if (coveragePercent < yellowThreshold) {
+        final boolean isCoverageHigher = Percent.change(coverage, targetCoverage) >= 0;
+        if (isCoverageHigher) {
+            return color;
+        } else if (coveragePercent < yellowThreshold) {
             color = COLOR_RED;
         } else if (coveragePercent < greenThreshold) {
             color = COLOR_YELLOW;
@@ -110,4 +113,5 @@ class Message {
                 this.changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
     }
+
 }

@@ -21,10 +21,9 @@ interface TargetCoverageRepository {
 
     /**
      *
-     * @param gitHubRepoUrl - Git Hub Repository URL (full)
-     * @param changeTarget
-     * @return master coverage or zero if coverage don't exist or not tracked before
+     *
+     * @param coverageMetaData@return master coverage or zero if coverage don't exist or not tracked before
      */
-    float get(final String gitHubRepoUrl, String changeTarget);
+    float get(CoverageMetaData coverageMetaData);
 
 }

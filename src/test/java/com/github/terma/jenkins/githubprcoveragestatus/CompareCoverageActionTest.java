@@ -36,6 +36,7 @@ public class CompareCoverageActionTest {
 
     private static final String GIT_URL = "git@github.com:some/my-project.git";
     private static final String CHANGE_TARGET = "master";
+    private static final String BRANCH_NAME_PROPERTY = "feature-1";
     private Build build = mock(Build.class);
     private PrintWriter printWriter = mock(PrintWriter.class);
     private TaskListener listener = mock(TaskListener.class);
@@ -65,7 +66,7 @@ public class CompareCoverageActionTest {
         when(pullRequestRepository.getGitHubRepository(GIT_URL)).thenReturn(ghRepository);
         when(listener.getLogger()).thenReturn(System.out);
     }
-    
+
     @Before
     public void reinitializeCoverageRepositories() {
         branchCoverageRepository = mock(TargetCoverageRepository.class);
@@ -85,7 +86,7 @@ public class CompareCoverageActionTest {
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](aaa/coverage-status-icon/?coverage=0.0&branchCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](aaa/coverage-status-icon/?branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
     }
 
     @Test
@@ -102,7 +103,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "Coverage 0% changed 0.0% vs master 0%"
+                "feature-1 coverage 0.0% changed 0.0% vs master coverage 0.0%"
         );
     }
 
@@ -111,7 +112,7 @@ public class CompareCoverageActionTest {
         prepareBuildSuccess();
         prepareEnvVars();
         prepareCommit();
-        prepareCoverageData(0.88f, 0.95f);
+        prepareCoverageData(0.887f, 0.955f);
         coverageAction.setPublishResultAs("statusCheck");
 
         coverageAction.perform(build, null, null, listener);
@@ -121,16 +122,16 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "Coverage 95% changed +7.0% vs master 88%"
+                "feature-1 coverage 95.5% changed +6.8% vs master coverage 88.7%"
         );
     }
-    
+
     @Test
     public void postResultAsFailedStatusCheck() throws IOException, InterruptedException {
         prepareBuildSuccess();
         prepareEnvVars();
         prepareCommit();
-        prepareCoverageData(0.95f, 0.9f);
+        prepareCoverageData(0.9542f, 0.9032f);
         coverageAction.setPublishResultAs("statusCheck");
 
         coverageAction.perform(build, null, null, listener);
@@ -140,7 +141,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.FAILURE,
                 "aaa/job/a",
-                "Coverage 90% changed -5.0% vs master 95%"
+                "feature-1 coverage 90.32% changed -5.1% vs master coverage 95.42%"
         );
     }
 
@@ -169,7 +170,7 @@ public class CompareCoverageActionTest {
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](https://img.shields.io/badge/coverage-0%25%20(0.0%25)%20vs%20master%200%25-brightgreen.svg)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](https://img.shields.io/badge/coverage-feature--1%200.0%25%20(0.0%25)%20vs%20master%200.0%25-brightgreen.svg)](aaa/job/a)");
     }
 
     @Test
@@ -181,11 +182,11 @@ public class CompareCoverageActionTest {
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![0% (0.0%) vs master 0%](customJ/coverage-status-icon/?coverage=0.0&branchCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](customJ/coverage-status-icon/?branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
     }
     
-    private void prepareCoverageData(float branchCoverage, float prCoverage) throws IOException, InterruptedException {
-        when(branchCoverageRepository.get(GIT_URL, CHANGE_TARGET)).thenReturn(branchCoverage);
+    private void prepareCoverageData(float targetCoverage, float prCoverage) throws IOException, InterruptedException {
+        when(branchCoverageRepository.get(new CoverageMetaData(GIT_URL, CHANGE_TARGET, null))).thenReturn(targetCoverage);
         when(coverageRepository.get(null)).thenReturn(prCoverage);
         initMocks();
     }
@@ -209,5 +210,8 @@ public class CompareCoverageActionTest {
         when(envVars.get(PrIdAndUrlUtils.GIT_PR_ID_ENV_PROPERTY)).thenReturn(prId);
         when(envVars.get(Utils.BUILD_URL_ENV_PROPERTY)).thenReturn(buildUrl);
         when(envVars.get(PrIdAndUrlUtils.GIT_URL_PROPERTY)).thenReturn(GIT_URL);
+        when(envVars.get(PrIdAndUrlUtils.CHANGE_TARGET_PROPERTY)).thenReturn(CHANGE_TARGET);
+        when(envVars.get(PrIdAndUrlUtils.BRANCH_NAME_PROPERTY)).thenReturn(BRANCH_NAME_PROPERTY);
     }
+
 }

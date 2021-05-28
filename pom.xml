@@ -8,7 +8,7 @@
     </parent>
 
     <artifactId>github-pr-coverage-status</artifactId>
-    <version>1.0.5-SNAPSHOT</version>
+    <version>1.0.6-SNAPSHOT</version>
     <packaging>hpi</packaging>
 
     <url>https://github.com/jenkinsci/github-pr-coverage-status-plugin</url>

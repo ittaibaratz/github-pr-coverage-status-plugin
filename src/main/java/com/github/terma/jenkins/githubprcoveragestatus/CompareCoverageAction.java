@@ -140,7 +140,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter).get(buildLog, workspace);
+                jacocoCoverageCounter).get(workspace);
         buildLog.println(BUILD_LOG_PREFIX + "build coverage: " + coverage);
 
         final String targetBranch = Utils.getTargetBranch(build, listener);

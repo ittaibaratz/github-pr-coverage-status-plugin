@@ -5,13 +5,13 @@ import java.util.Objects;
 
 public class ReportMetaData {
     private String key;
-    private List<String> includePaths;
-    private List<String> excludePaths;
+    private List<String> includes;
+    private List<String> excludes;
 
-    public ReportMetaData(String key, List<String> includePaths, List<String> excludePaths) {
+    public ReportMetaData(String key, List<String> includes, List<String> excludes) {
         this.key = key;
-        this.includePaths = includePaths;
-        this.excludePaths = excludePaths;
+        this.includes = includes;
+        this.excludes = excludes;
     }
 
     public String getKey() {
@@ -22,28 +22,28 @@ public class ReportMetaData {
         this.key = key;
     }
 
-    public List<String> getIncludePaths() {
-        return includePaths;
+    public List<String> getIncludes() {
+        return includes;
     }
 
-    public void setIncludePaths(List<String> includePaths) {
-        this.includePaths = includePaths;
+    public void setIncludes(List<String> includes) {
+        this.includes = includes;
     }
 
-    public List<String> getExcludePaths() {
-        return excludePaths;
+    public List<String> getExcludes() {
+        return excludes;
     }
 
-    public void setExcludePaths(List<String> excludePaths) {
-        this.excludePaths = excludePaths;
+    public void setExcludes(List<String> excludes) {
+        this.excludes = excludes;
     }
 
     @Override
     public String toString() {
         return "ReportMetaData{" +
                 "key='" + key + '\'' +
-                ", includePaths=" + includePaths +
-                ", excludePaths=" + excludePaths +
+                ", includePaths=" + includes +
+                ", excludePaths=" + excludes +
                 '}';
     }
 
@@ -52,11 +52,11 @@ public class ReportMetaData {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ReportMetaData that = (ReportMetaData) o;
-        return key.equals(that.key) && includePaths.equals(that.includePaths) && excludePaths.equals(that.excludePaths);
+        return key.equals(that.key) && includes.equals(that.includes) && excludes.equals(that.excludes);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, includePaths, excludePaths);
+        return Objects.hash(key, includes, excludes);
     }
 }

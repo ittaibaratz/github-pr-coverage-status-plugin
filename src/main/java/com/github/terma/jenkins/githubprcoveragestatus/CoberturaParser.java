@@ -50,9 +50,17 @@ class CoberturaParser implements CoverageReportParser {
     @Override
     public float get(String coberturaFilePath) {
         try {
+            // Read from String
+
+            // Read from String
             String content = FileUtils.readFileToString(new File(coberturaFilePath));
             float lineRate = Float.parseFloat(findFirst(content, "line-rate=['\"]([0-9.]+)['\"]"));
+            int linesValid = Integer.parseInt(findFirst(content, "lines-valid=['\"]([0-9]+)['\"]"));
+            int linesCovered = Integer.parseInt(findFirst(content, "lines-covered=['\"]([0-9]+)['\"]"));
             float branchRate = Float.parseFloat(findFirst(content, "branch-rate=['\"]([0-9.]+)['\"]"));
+            int branchValid = Integer.parseInt(findFirst(content, "branches-valid=['\"]([0-9]+)['\"]"));
+            int branchCovered = Integer.parseInt(findFirst(content, "branches-covered=['\"]([0-9]+)['\"]"));
+
             if (lineRate > 0 && branchRate == 0) {
               return lineRate;
             } else if (lineRate == 0 && branchRate > 0) {

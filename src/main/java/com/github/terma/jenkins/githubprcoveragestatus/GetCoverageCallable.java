@@ -35,7 +35,7 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
-    private PrintStream buildLog;
+    private transient PrintStream buildLog;
 
     GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
         this.disableSimpleCov = disableSimpleCov;

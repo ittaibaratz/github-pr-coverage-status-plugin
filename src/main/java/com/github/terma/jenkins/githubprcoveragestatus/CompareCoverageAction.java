@@ -134,13 +134,13 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         buildLog.println(BUILD_LOG_PREFIX + "getting master coverage...");
         MasterCoverageRepository masterCoverageRepository = ServiceRegistry
                 .getMasterCoverageRepository(buildLog, sonarLogin, sonarPassword);
-        final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
+        final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(buildLog, gitUrl);
         final float masterCoverage = masterCoverageRepository.get(gitUrl);
         buildLog.println(BUILD_LOG_PREFIX + "master coverage: " + masterCoverage);
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting coverage...");
         final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter).get(workspace);
+                jacocoCoverageCounter).get(buildLog, workspace);
         buildLog.println(BUILD_LOG_PREFIX + "build coverage: " + coverage);
 
         final String targetBranch = Utils.getTargetBranch(build, listener);

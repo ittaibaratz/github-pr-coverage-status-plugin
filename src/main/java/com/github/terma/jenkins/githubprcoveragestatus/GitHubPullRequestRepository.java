@@ -21,12 +21,13 @@ import org.kohsuke.github.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class GitHubPullRequestRepository implements PullRequestRepository {
 
     @Override
-    public GHPullRequest getPullRequestFor(String gitHubUrl, String branch, String sha) throws IOException {
-        for (GHPullRequest pr : getGitHubRepository(gitHubUrl).getPullRequests(GHIssueState.OPEN)) {
+    public GHPullRequest getPullRequestFor(PrintStream buildLog, String gitHubUrl, String branch, String sha) throws IOException {
+        for (GHPullRequest pr : getGitHubRepository(buildLog, gitHubUrl).getPullRequests(GHIssueState.OPEN)) {
             if (pr.getHead().getRef().equals(branch) && pr.getHead().getSha().equals(sha)) {
                 return pr;
             }
@@ -35,11 +36,15 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
     }
 
     @Override
-    public GHRepository getGitHubRepository(final String gitHubUrl) throws IOException {
-        GitHub gitHub = getGitHub();
+    public GHRepository getGitHubRepository(PrintStream buildLog, final String gitHubUrl) throws IOException {
+        GitHub gitHub = getGitHub(buildLog);
 
         try {
-            if (gitHub.getRateLimit().remaining == 0) {
+            buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Calling github rate limit....");
+            GHRateLimit ghRateLimit = gitHub.getRateLimit();
+            buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Github rate limit: " + ghRateLimit);
+            if (ghRateLimit.remaining == 0) {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Exceeded rate limit for repository");
                 throw new IOException("Exceeded rate limit for repository");
             }
         } catch (FileNotFoundException ex) {
@@ -58,7 +63,7 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
         }
     }
 
-    private static GitHub getGitHub() throws IOException {
+    private static GitHub getGitHub(PrintStream buildLog) throws IOException {
         final SettingsRepository settingsRepository = ServiceRegistry.getSettingsRepository();
         final String apiUrl = settingsRepository.getGitHubApiUrl();
         final String personalAccessToken = settingsRepository.getPersonalAccessToken();
@@ -71,8 +76,10 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
             }
         } else {
             if (personalAccessToken != null) {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Connecting to Github with personalAccessToken");
                 return GitHub.connectUsingOAuth(personalAccessToken);
             } else {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Connecting to Github anonymously");
                 return GitHub.connectAnonymously();
             }
         }

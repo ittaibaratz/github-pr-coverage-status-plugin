@@ -26,6 +26,7 @@ import org.apache.tools.ant.types.FileSet;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,6 +35,7 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
+    private PrintStream buildLog;
 
     GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
         this.disableSimpleCov = disableSimpleCov;
@@ -45,18 +47,23 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> impleme
         DirectoryScanner ds = fs.getDirectoryScanner();
         String[] files = ds.getIncludedFiles();
         List<Float> cov = new ArrayList<Float>();
+        float coverage;
         for (String file : files) {
-            cov.add(parser.get(new File(ds.getBasedir(), file).getAbsolutePath()));
+            coverage = parser.get(new File(ds.getBasedir(), file).getAbsolutePath());
+            this.buildLog.println(file + ": " + coverage);
+            cov.add(coverage);
         }
         return cov;
     }
 
     @Override
-    public float get(final FilePath workspace) throws IOException, InterruptedException {
+    public float get(PrintStream buildLog, final FilePath workspace) throws IOException, InterruptedException {
+        this.buildLog = buildLog;
+        this.buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "parsing coverage files....");
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }
-        return workspace.act(new GetCoverageCallable(disableSimpleCov, jacocoCounterType));
+        return workspace.act(this);
     }
 
     @Override

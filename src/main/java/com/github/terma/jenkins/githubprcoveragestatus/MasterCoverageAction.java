@@ -90,7 +90,7 @@ public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
         final float masterCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
-                .get(workspace);
+                .get(buildLog, workspace);
         buildLog.println("Master coverage " + Percent.toString(masterCoverage));
         Configuration.setMasterCoverage(gitUrl, masterCoverage);
     }

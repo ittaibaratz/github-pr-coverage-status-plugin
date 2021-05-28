@@ -61,7 +61,7 @@ public class CompareCoverageActionTest {
         ServiceRegistry.setCoverageRepository(coverageRepository);
         ServiceRegistry.setSettingsRepository(settingsRepository);
         ServiceRegistry.setPullRequestRepository(pullRequestRepository);
-        when(pullRequestRepository.getGitHubRepository(GIT_URL)).thenReturn(ghRepository);
+        when(pullRequestRepository.getGitHubRepository(System.out, GIT_URL)).thenReturn(ghRepository);
         when(listener.getLogger()).thenReturn(System.out);
     }
 
@@ -185,7 +185,7 @@ public class CompareCoverageActionTest {
 
     private void prepareCoverageData(float masterCoverage, float prCoverage) throws IOException, InterruptedException {
         when(masterCoverageRepository.get(GIT_URL)).thenReturn(masterCoverage);
-        when(coverageRepository.get(null)).thenReturn(prCoverage);
+        when(coverageRepository.get(listener.getLogger(), null)).thenReturn(prCoverage);
         initMocks();
     }
 

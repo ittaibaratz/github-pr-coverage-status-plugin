@@ -60,7 +60,7 @@ public class PrIdAndUrlUtils {
         final String branch = scmVars.get("GIT_BRANCH");
         final String sha = scmVars.get("GIT_COMMIT");
         buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + String.format("Attempt to discover PR for %s @ %s", branch, sha));
-        GHPullRequest gitPr = ServiceRegistry.getPullRequestRepository().getPullRequestFor(url, branch, sha);
+        GHPullRequest gitPr = ServiceRegistry.getPullRequestRepository().getPullRequestFor(buildLog, url, branch, sha);
         int id = gitPr.getNumber();
         buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + String.format("Discovered PR %d", id));
         return id;

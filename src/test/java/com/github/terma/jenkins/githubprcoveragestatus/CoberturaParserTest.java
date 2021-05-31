@@ -29,7 +29,7 @@ public class CoberturaParserTest {
         String filePath = CoberturaParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/CoberturaParserTest/cobertura.xml").getFile();
 
-        Assert.assertEquals(0.94, new CoberturaParser().get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(32, 36), new CoberturaParser().get(filePath));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class CoberturaParserTest {
         String filePath = CoberturaParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/CoberturaParserTest/cobertura-with-single-quotes.xml").getFile();
 
-        Assert.assertEquals(0.94, new CoberturaParser().get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(32, 36), new CoberturaParser().get(filePath));
     }
 
     @Test
@@ -45,23 +45,23 @@ public class CoberturaParserTest {
         String filePath = CoberturaParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/CoberturaParserTest/cobertura-zero-coverage.xml").getFile();
 
-        Assert.assertEquals(0, new CoberturaParser().get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(32, 36), new CoberturaParser().get(filePath));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void extractCoverageIfBranchRateIsZeroAndHasOnlyLineRate() throws IOException {
         String filePath = CoberturaParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/CoberturaParserTest/cobertura-zero-branch-rate.xml").getFile();
 
-        Assert.assertEquals(0.5, new CoberturaParser().get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(32, 36), new CoberturaParser().get(filePath));
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void extractCoverageIfLineRateIsZeroAndHasBranchRate() throws IOException {
         String filePath = CoberturaParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/CoberturaParserTest/cobertura-zero-line-rate.xml").getFile();
 
-        Assert.assertEquals(1, new CoberturaParser().get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(0, 0), new CoberturaParser().get(filePath));
     }
 
     @Test(expected = IllegalArgumentException.class)

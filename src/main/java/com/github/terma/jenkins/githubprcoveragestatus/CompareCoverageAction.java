@@ -48,7 +48,7 @@ import java.util.Map;
  * Workflow:
  * <ul>
  * <li>find coverage of current build and assume it as pull request coverage</li>
- * <li>find branch coverage for repository URL could be taken by {@link BranchCoverageAction} or Sonar {@link Configuration}</li>
+ * <li>find branch coverage for repository URL taken by {@link BranchCoverageAction}</li>
  * <li>Publish nice status message to GitHub PR page</li>
  * </ul>
  *
@@ -60,10 +60,8 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     public static final String BUILD_LOG_PREFIX = "[GitHub PR Status] ";
 
     private static final long serialVersionUID = 1L;
-    private String sonarLogin;
-    private String sonarPassword;
     private String publishResultAs;
-    private String jacocoCoverageCounter;
+    private String jacocoCounterType;
     private Map<String, String> scmVars;
     private List<ReportMetaData> reportMetaDataList;
 
@@ -75,8 +73,8 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         return publishResultAs;
     }
 
-    public String getJacocoCoverageCounter() {
-        return jacocoCoverageCounter;
+    public String getJacocoCounterType() {
+        return jacocoCounterType;
     }
 
     // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
@@ -88,25 +86,14 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         return reportMetaDataList;
     }
 
-
-    @DataBoundSetter
-    public void setSonarLogin(String sonarLogin) {
-        this.sonarLogin = sonarLogin;
-    }
-
-    @DataBoundSetter
-    public void setSonarPassword(String sonarPassword) {
-        this.sonarPassword = sonarPassword;
-    }
-
     @DataBoundSetter
     public void setPublishResultAs(String publishResultAs) {
         this.publishResultAs = publishResultAs;
     }
 
     @DataBoundSetter
-    public void setJacocoCoverageCounter(String jacocoCoverageCounter) {
-        this.jacocoCoverageCounter = jacocoCoverageCounter;
+    public void setJacocoCounterType(String jacocoCounterType) {
+        this.jacocoCounterType = jacocoCounterType;
     }
 
     @DataBoundSetter
@@ -140,6 +127,11 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         final SettingsRepository settingsRepository = ServiceRegistry.getSettingsRepository();
 
+        final String buildUrl = Utils.getBuildUrl(build, listener);
+
+        String jenkinsUrl = settingsRepository.getJenkinsUrl();
+        if (jenkinsUrl == null) jenkinsUrl = Utils.getJenkinsUrlFromBuildUrl(buildUrl);
+
         final int prId = PrIdAndUrlUtils.getPrId(scmVars, build, listener);
         final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
         final String changeTarget = PrIdAndUrlUtils.getChangeTarget(scmVars, build, listener);
@@ -155,29 +147,33 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
         final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
 
         buildLog.println(BUILD_LOG_PREFIX + "getting target coverage...");
-        final float targetCoverage = ServiceRegistry
-                .getTargetCoverageRepository(buildLog, sonarLogin, sonarPassword).get(coverageMetaData);
-        buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + targetCoverage);
+        Map<String, ReportData> targetCoverageData = ServiceRegistry
+                .getTargetCoverageRepository(buildLog).get(coverageMetaData);
+        buildLog.println(BUILD_LOG_PREFIX + " targetCoverage: " + targetCoverageData);
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
-        final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter, reportMetaDataList).get(workspace);
-        buildLog.println(BUILD_LOG_PREFIX + gitUrl + "/tree/" + changeTarget + " coverage: " + coverage);
+        Map<String, ReportData> coverageData = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
+                jacocoCounterType, reportMetaDataList).get(workspace);
+        buildLog.println(BUILD_LOG_PREFIX + " coverage: " + coverageData);
 
-        final Message message = new Message(coverage, targetCoverage, branchName, changeTarget);
-        buildLog.println(BUILD_LOG_PREFIX + message.forConsole());
+        if(targetCoverageData==null) buildLog.println("Record Branch Coverage with CoverageMetaData: " + coverageData);
 
-        final String buildUrl = Utils.getBuildUrl(build, listener);
+        Message message;
+        float coverage, targetCoverage;
+        for(String key: coverageData.keySet()) {
+            coverage = coverageData.get(key).getRate();
+            if(targetCoverageData!=null && targetCoverageData.containsKey(key)) targetCoverage = targetCoverageData.get(key).getRate();
+            else targetCoverage = 0;
+            message = new Message(key, coverage, targetCoverage, branchName, changeTarget);
+            buildLog.println(BUILD_LOG_PREFIX + message.forConsole());
 
-        String jenkinsUrl = settingsRepository.getJenkinsUrl();
-        if (jenkinsUrl == null) jenkinsUrl = Utils.getJenkinsUrlFromBuildUrl(buildUrl);
-
-        if ("comment".equalsIgnoreCase(publishResultAs)) {
-            buildLog.println(BUILD_LOG_PREFIX + "publishing result as comment");
-            publishComment(message, buildUrl, jenkinsUrl, settingsRepository, gitHubRepository, prId, listener);
-        } else {
-            buildLog.println(BUILD_LOG_PREFIX + "publishing result as status check");
-            publishStatusCheck(message, gitHubRepository, prId, targetCoverage, coverage, buildUrl, listener);
+            if ("comment".equalsIgnoreCase(publishResultAs)) {
+                buildLog.println(BUILD_LOG_PREFIX + "publishing result as comment");
+                publishComment(message, buildUrl, jenkinsUrl, settingsRepository, gitHubRepository, prId, listener);
+            } else {
+                buildLog.println(BUILD_LOG_PREFIX + "publishing result as status check");
+                publishStatusCheck(message, gitHubRepository, prId, targetCoverage, coverage, buildUrl, listener);
+            }
         }
     }
 

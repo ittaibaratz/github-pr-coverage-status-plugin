@@ -3,9 +3,10 @@ package com.github.terma.jenkins.githubprcoveragestatus;
 import hudson.FilePath;
 
 import java.io.IOException;
+import java.util.Map;
 
 interface CoverageRepository {
 
-    float get(FilePath workspace) throws IOException, InterruptedException;
+    Map<String, ReportData> get(FilePath workspace) throws IOException, InterruptedException;
 
 }

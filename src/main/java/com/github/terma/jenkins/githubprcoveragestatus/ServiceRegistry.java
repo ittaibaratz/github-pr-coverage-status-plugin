@@ -27,25 +27,10 @@ public class ServiceRegistry {
     private static SettingsRepository settingsRepository;
     private static PullRequestRepository pullRequestRepository;
 
-    public static TargetCoverageRepository getTargetCoverageRepository(PrintStream buildLog, final String login, final String password) {
+    public static TargetCoverageRepository getTargetCoverageRepository(PrintStream buildLog) {
         if (targetCoverageRepository != null) return targetCoverageRepository;
 
-        if (Configuration.isUseSonarForTargetCoverage()) {
-            final String sonarUrl = Configuration.getSonarUrl();
-            if (login != null && password != null) {
-                buildLog.println("take target coverage from sonar by login/password");
-                return new SonarTargetCoverageRepository(sonarUrl, login, password, buildLog);
-            }
-            if (Configuration.getSonarToken() != null) {
-                buildLog.println("take target coverage from sonar by token");
-                return new SonarTargetCoverageRepository(sonarUrl, Configuration.getSonarToken(), "", buildLog);
-            }
-            buildLog.println("take target coverage from sonar by login/password");
-            return new SonarTargetCoverageRepository(sonarUrl, Configuration.getSonarLogin(), Configuration.getSonarPassword(), buildLog);
-        } else {
-            buildLog.println("use default coverage repo");
-            return new BuildTargetCoverageRepository(buildLog);
-        }
+        return new BuildTargetCoverageRepository(buildLog);
     }
 
     public static void setTargetCoverageRepository(TargetCoverageRepository targetCoverageRepository) {

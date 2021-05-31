@@ -14,11 +14,11 @@ interface SettingsRepository {
 
     boolean isPrivateJenkinsPublicGitHub();
 
-    boolean isUseSonarForTargetCoverage();
+//    boolean isUseSonarForTargetCoverage();
 
     boolean isDisableSimpleCov();
 
-    String getSonarUrl();
-
-    String getSonarToken();
+//    String getSonarUrl();
+//
+//    String getSonarToken();
 }

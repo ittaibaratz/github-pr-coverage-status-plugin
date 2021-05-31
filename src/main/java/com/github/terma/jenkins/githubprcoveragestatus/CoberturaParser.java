@@ -17,10 +17,11 @@ limitations under the License.
 */
 package com.github.terma.jenkins.githubprcoveragestatus;
 
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
+import javax.xml.stream.*;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +29,8 @@ import java.util.regex.Pattern;
  * <a href="http://cobertura.sourceforge.net/xml/coverage-04.dtd">Coverage DTD</a>
  */
 class CoberturaParser implements CoverageReportParser {
+
+    private final Logger LOGGER = Logger.getLogger(CoverageReportParser.class.getName());
 
     private static String findFirst(String string, String pattern) {
         String result = findFirstOrNull(string, pattern);
@@ -47,28 +50,87 @@ class CoberturaParser implements CoverageReportParser {
         }
     }
 
-    @Override
-    public float get(String coberturaFilePath) {
+    private int getIntegerCoverageAttributeValue(XMLStreamReader xmlStreamReader, String filePath,
+                                                       String tag, String attribute) throws IllegalArgumentException {
         try {
-            // Read from String
+            return Integer.parseInt(xmlStreamReader
+                    .getAttributeValue(null, attribute));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(String.format("No attribute: %s found in tag: %s in file: %s",
+                    attribute, tag, filePath));
+        }
+    }
 
-            // Read from String
-            String content = FileUtils.readFileToString(new File(coberturaFilePath));
-            float lineRate = Float.parseFloat(findFirst(content, "line-rate=['\"]([0-9.]+)['\"]"));
-            int linesValid = Integer.parseInt(findFirst(content, "lines-valid=['\"]([0-9]+)['\"]"));
-            int linesCovered = Integer.parseInt(findFirst(content, "lines-covered=['\"]([0-9]+)['\"]"));
-            float branchRate = Float.parseFloat(findFirst(content, "branch-rate=['\"]([0-9.]+)['\"]"));
-            int branchValid = Integer.parseInt(findFirst(content, "branches-valid=['\"]([0-9]+)['\"]"));
-            int branchCovered = Integer.parseInt(findFirst(content, "branches-covered=['\"]([0-9]+)['\"]"));
+    private float getFloatCoverageAttributeValue(XMLStreamReader xmlStreamReader, String filePath,
+                                                       String tag, String attribute) throws IllegalArgumentException {
+        try {
+            return Float.parseFloat(xmlStreamReader
+                    .getAttributeValue(null, attribute));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(String.format("No attribute: %s found in tag: %s in file: %s",
+                    attribute, tag, filePath));
+        }
+    }
 
-            if (lineRate > 0 && branchRate == 0) {
-              return lineRate;
-            } else if (lineRate == 0 && branchRate > 0) {
-              return branchRate;
-            } else {
-              return lineRate / 2 + branchRate / 2;
+    @Override
+    public ReportData get(String coberturaFilePath) {
+        try {
+            int linesCovered = 0, linesValid = 0, branchesCovered = 0, branchesValid = 0;
+            float lineRate = 0.0f, branchRate = 0.0f;
+            String source = null, tag = null;
+            boolean foundCoverage = false, foundSource = false;
+
+            // Read XML using StAX
+            XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
+            XMLStreamReader xmlStreamReader = xmlInputFactory
+                    .createXMLStreamReader(new FileInputStream(coberturaFilePath));
+            int eventType;
+            while(xmlStreamReader.hasNext()) {
+                eventType = xmlStreamReader.getEventType();
+                switch (eventType) {
+                    case XMLStreamReader.START_ELEMENT:
+                        tag = xmlStreamReader.getLocalName();
+                        if(tag.equals("coverage")) {
+                            lineRate = getFloatCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "line-rate");
+                            linesCovered = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "lines-covered");
+                            linesValid = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "lines-valid");
+                            branchRate = getFloatCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "branch-rate");
+                            branchesCovered = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "branches-covered");
+                            branchesValid = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath,tag, "branches-valid");
+                            foundCoverage = true;
+                        }
+                        break;
+                    case XMLStreamReader.END_ELEMENT:
+                        break;
+                }
+                if(foundCoverage) break;
+                xmlStreamReader.next();
             }
-        } catch (IOException e) {
+            xmlStreamReader.close();
+            LOGGER.log(Level.INFO, String.format(
+                    "linesCovered = %d, linesValid = %d, branchesCovered = %d, branchesValid = %d, source = %s",
+                    linesCovered, linesValid, branchesCovered, branchesValid, source));
+
+            return new ReportData(linesCovered, linesValid);
+
+//            // Read from String
+//            String content = FileUtils.readFileToString(new File(coberturaFilePath));
+//            lineRate = Float.parseFloat(findFirst(content, "line-rate=['\"]([0-9.]+)['\"]"));
+//            linesCovered = Integer.parseInt(findFirst(content, "lines-covered=['\"]([0-9]+)['\"]"));
+//            linesValid = Integer.parseInt(findFirst(content, "lines-valid=['\"]([0-9]+)['\"]"));
+//
+//            branchRate = Float.parseFloat(findFirst(content, "branch-rate=['\"]([0-9.]+)['\"]"));
+//            branchesValid = Integer.parseInt(findFirst(content, "branches-valid=['\"]([0-9]+)['\"]"));
+//            branchesCovered = Integer.parseInt(findFirst(content, "branches-covered=['\"]([0-9]+)['\"]"));
+//
+//            if (lineRate > 0 && branchRate == 0) {
+//              return lineRate;
+//            } else if (lineRate == 0 && branchRate > 0) {
+//              return branchRate;
+//            } else {
+//              return lineRate / 2 + branchRate / 2;
+//            }
+        } catch (IOException | XMLStreamException e) {
             throw new RuntimeException(e);
         }
     }

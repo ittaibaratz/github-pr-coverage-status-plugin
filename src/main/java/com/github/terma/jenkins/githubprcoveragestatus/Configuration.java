@@ -57,28 +57,8 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         return DESCRIPTOR.getPersonalAccessToken();
     }
 
-    public static String getSonarUrl() {
-        return DESCRIPTOR.getSonarUrl();
-    }
-
-    public static String getSonarToken() {
-        return DESCRIPTOR.getSonarToken();
-    }
-
-    public static String getSonarLogin() {
-        return DESCRIPTOR.getSonarLogin();
-    }
-
-    public static String getSonarPassword() {
-        return DESCRIPTOR.getSonarPassword();
-    }
-
-    public static Boolean isUseSonarForTargetCoverage() {
-        return DESCRIPTOR.isUseSonarForTargetCoverage();
-    }
-
-    public static void setBranchCoverage(CoverageMetaData coverageMetaData, final float coverage) {
-        DESCRIPTOR.set(coverageMetaData, coverage);
+    public static void setBranchCoverage(CoverageMetaData coverageMetaData, Map<String, ReportData> coverageData) {
+        DESCRIPTOR.set(coverageMetaData, coverageData);
     }
 
     @Override
@@ -92,18 +72,13 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         private static final int DEFAULT_YELLOW_THRESHOLD = 80;
         private static final int DEFAULT_GREEN_THRESHOLD = 90;
 
-        private final Map<CoverageMetaData, Float> coverageByCoverageMetaData = new ConcurrentHashMap<CoverageMetaData, Float>();
+        private final Map<CoverageMetaData, Map<String, ReportData>> coverageByCoverageMetaData = new ConcurrentHashMap<CoverageMetaData, Map<String, ReportData>>();
 
         private boolean disableSimpleCov;
         private String gitHubApiUrl;
         private String personalAccessToken;
         private String jenkinsUrl;
         private boolean privateJenkinsPublicGitHub;
-        private boolean useSonarForTargetCoverage;
-        private String sonarUrl;
-        private String sonarToken;
-        private String sonarLogin;
-        private String sonarPassword;
 
         private int yellowThreshold = DEFAULT_YELLOW_THRESHOLD;
         private int greenThreshold = DEFAULT_GREEN_THRESHOLD;
@@ -118,12 +93,12 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         }
 
         @Nonnull
-        public Map<CoverageMetaData, Float> getCoverageByCoverageMetaData() {
+        public Map<CoverageMetaData, Map<String, ReportData>> getCoverageByCoverageMetaData() {
             return coverageByCoverageMetaData;
         }
 
-        public void set(CoverageMetaData coverageMetaData, float coverage) {
-            coverageByCoverageMetaData.put(coverageMetaData, coverage);
+        public void set(CoverageMetaData coverageMetaData, Map<String, ReportData> coverageData) {
+            coverageByCoverageMetaData.put(coverageMetaData, coverageData);
             save();
         }
 
@@ -153,36 +128,13 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         }
 
         @Override
-        public boolean isUseSonarForTargetCoverage() {
-            return useSonarForTargetCoverage;
-        }
-
-        @Override
         public boolean isDisableSimpleCov() {
             return disableSimpleCov;
         }
 
         @Override
-        public String getSonarUrl() {
-            return sonarUrl;
-        }
-
-        @Override
-        public String getSonarToken() {
-            return sonarToken;
-        }
-
-        @Override
         public String getJenkinsUrl() {
             return jenkinsUrl;
-        }
-
-        public String getSonarLogin() {
-            return sonarLogin;
-        }
-
-        public String getSonarPassword() {
-            return sonarPassword;
         }
 
         @Override
@@ -193,12 +145,7 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
             greenThreshold = NumberUtils.toInt(formData.getString("greenThreshold"), DEFAULT_GREEN_THRESHOLD);
             jenkinsUrl = StringUtils.trimToNull(formData.getString("jenkinsUrl"));
             privateJenkinsPublicGitHub = BooleanUtils.toBoolean(formData.getString("privateJenkinsPublicGitHub"));
-            useSonarForTargetCoverage = BooleanUtils.toBoolean(formData.getString("useSonarForTargetCoverage"));
             disableSimpleCov = BooleanUtils.toBoolean(formData.getString("disableSimpleCov"));
-            sonarUrl = StringUtils.trimToNull(formData.getString("sonarUrl"));
-            sonarToken = StringUtils.trimToNull(formData.getString("sonarToken"));
-            sonarLogin = StringUtils.trimToNull(formData.getString("sonarLogin"));
-            sonarPassword = StringUtils.trimToNull(formData.getString("sonarPassword"));
             save();
             return super.configure(req, formData);
         }

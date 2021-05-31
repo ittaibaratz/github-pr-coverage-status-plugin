@@ -51,12 +51,19 @@ public class CoverageMetaData {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
+
         CoverageMetaData that = (CoverageMetaData) o;
-        return gitUrl.equals(that.gitUrl) && gitBranch.equals(that.gitBranch) && Objects.equals(reportMetaDataList, that.reportMetaDataList);
+
+        if (!gitUrl.equals(that.gitUrl)) return false;
+        if (!gitBranch.equals(that.gitBranch)) return false;
+        return reportMetaDataList != null ? reportMetaDataList.equals(that.reportMetaDataList) : that.reportMetaDataList == null;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(gitUrl, gitBranch, reportMetaDataList);
+        int result = gitUrl.hashCode();
+        result = 31 * result + gitBranch.hashCode();
+        result = 31 * result + (reportMetaDataList != null ? reportMetaDataList.hashCode() : 0);
+        return result;
     }
 }

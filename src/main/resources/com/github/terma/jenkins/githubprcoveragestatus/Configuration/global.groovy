@@ -28,26 +28,6 @@ f.section(title: descriptor.displayName) {
         f.textbox()
     }
 
-    f.entry(field: "useSonarForTargetCoverage", title: _("Use Sonar for target coverage")) {
-        f.checkbox()
-    }
-
-    f.entry(field: "sonarUrl", title: _("Sonar endpoint URL")) {
-        f.textbox()
-    }
-
-    f.entry(field: "sonarToken", title: _("Sonar access token")) {
-        f.password()
-    }
-
-    f.entry(field: "sonarLogin", title: _("Sonar login")) {
-        f.textbox()
-    }
-
-    f.entry(field: "sonarPassword", title: _("Sonar password")) {
-        f.password()
-    }
-
     f.entry(field: "disableSimpleCov", title: _("Disable SimpleCov coverage parser")) {
         f.checkbox()
     }

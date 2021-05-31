@@ -28,7 +28,9 @@ import org.kohsuke.github.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static org.mockito.Mockito.*;
 
@@ -54,6 +56,10 @@ public class CompareCoverageActionTest {
         add(commit);
     }};
     private PagedIterable<GHPullRequestCommitDetail> pagedIterable = mock(PagedIterable.class);
+    private List<ReportMetaData> reportMetaDataList = new ArrayList<ReportMetaData>() {{
+        add(new ReportMetaData("repo"));
+    }};
+    private CoverageMetaData coverageMetaData = new CoverageMetaData(GIT_URL, CHANGE_TARGET, reportMetaDataList);
 
     private CompareCoverageAction coverageAction = new CompareCoverageAction();
 
@@ -82,11 +88,13 @@ public class CompareCoverageActionTest {
     public void postCoverageStatusToPullRequestAsComment() throws IOException, InterruptedException {
         prepareBuildSuccess();
         prepareEnvVars();
+        prepareCoverageData(0f, 0f);
         coverageAction.setPublishResultAs("comment");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](aaa/coverage-status-icon/?branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](aaa/coverage-status-icon/?label=repo&branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
     }
 
     @Test
@@ -94,7 +102,9 @@ public class CompareCoverageActionTest {
         prepareBuildSuccess();
         prepareEnvVars();
         prepareCommit();
+        prepareCoverageData(0f, 0f);
         coverageAction.setPublishResultAs("statusCheck");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
@@ -103,7 +113,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "feature-1 coverage 0.0% changed 0.0% vs master coverage 0.0%"
+                "repo : feature-1 coverage 0.0% changed 0.0% vs master coverage 0.0%"
         );
     }
 
@@ -114,6 +124,7 @@ public class CompareCoverageActionTest {
         prepareCommit();
         prepareCoverageData(0.887f, 0.955f);
         coverageAction.setPublishResultAs("statusCheck");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
@@ -122,7 +133,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "feature-1 coverage 95.5% changed +6.8% vs master coverage 88.7%"
+                "repo : feature-1 coverage 95.5% changed +6.8% vs master coverage 88.7%"
         );
     }
 
@@ -133,6 +144,7 @@ public class CompareCoverageActionTest {
         prepareCommit();
         prepareCoverageData(0.9542f, 0.9032f);
         coverageAction.setPublishResultAs("statusCheck");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
@@ -141,7 +153,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.FAILURE,
                 "aaa/job/a",
-                "feature-1 coverage 90.32% changed -5.1% vs master coverage 95.42%"
+                "repo : feature-1 coverage 90.32% changed -5.1% vs master coverage 95.42%"
         );
     }
 
@@ -149,8 +161,10 @@ public class CompareCoverageActionTest {
     public void keepBuildGreenAndLogErrorIfExceptionDuringGitHubAccess() throws IOException, InterruptedException {
         prepareBuildSuccess();
         prepareEnvVars();
+        prepareCoverageData(0f,0f);
         when(listener.error(anyString())).thenReturn(printWriter);
         coverageAction.setPublishResultAs("comment");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         doThrow(new IOException("???")).when(pullRequestRepository).comment(any(GHRepository.class), anyInt(), anyString());
 
@@ -165,29 +179,42 @@ public class CompareCoverageActionTest {
             throws IOException, InterruptedException {
         prepareBuildSuccess();
         prepareEnvVars();
+        prepareCoverageData(0f,0f);
         when(settingsRepository.isPrivateJenkinsPublicGitHub()).thenReturn(true);
         coverageAction.setPublishResultAs("comment");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](https://img.shields.io/badge/coverage-feature--1%200.0%25%20(0.0%25)%20vs%20master%200.0%25-brightgreen.svg)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](https://img.shields.io/badge/repo-feature--1%200.0%25%20(0.0%25)%20vs%20master%200.0%25-brightgreen.svg)](aaa/job/a)");
     }
 
     @Test
     public void postCoverageStatusToPullRequestAsCommentWithCustomJenkinsUrlIfConfigured() throws IOException, InterruptedException {
         prepareBuildSuccess();
         prepareEnvVars();
+        prepareCoverageData(0f,0f);
         when(settingsRepository.getJenkinsUrl()).thenReturn("customJ");
         coverageAction.setPublishResultAs("comment");
+        coverageAction.setReportMetaDataList(reportMetaDataList);
 
         coverageAction.perform(build, null, null, listener);
 
-        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](customJ/coverage-status-icon/?branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
+        verify(pullRequestRepository).comment(ghRepository, 12, "[![feature-1 0.0% (0.0%) vs master 0.0%](customJ/coverage-status-icon/?label=repo&branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](aaa/job/a)");
     }
-    
+
     private void prepareCoverageData(float targetCoverage, float prCoverage) throws IOException, InterruptedException {
-        when(branchCoverageRepository.get(new CoverageMetaData(GIT_URL, CHANGE_TARGET, null))).thenReturn(targetCoverage);
-        when(coverageRepository.get(null)).thenReturn(prCoverage);
+        Map<String, ReportData> targetCoverageData = new HashMap<>();
+        ReportData targetReportData = mock(ReportData.class);
+        when(targetReportData.getRate()).thenReturn(targetCoverage);
+        targetCoverageData.put("repo", targetReportData);
+        when(branchCoverageRepository.get(coverageMetaData)).thenReturn(targetCoverageData);
+
+        Map<String, ReportData> coverageData = new HashMap<>();
+        ReportData buildReportData = mock(ReportData.class);
+        when(buildReportData.getRate()).thenReturn(prCoverage);
+        coverageData.put("repo", buildReportData);
+        when(coverageRepository.get(null)).thenReturn(coverageData);
         initMocks();
     }
 

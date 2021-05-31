@@ -24,18 +24,20 @@ import org.apache.commons.httpclient.util.URIUtil;
 class Message {
 
     //see http://shields.io/ for reference
-    private static final String BADGE_TEMPLATE = "https://img.shields.io/badge/coverage-%s-%s.svg";
+    private static final String BADGE_TEMPLATE = "https://img.shields.io/badge/%s-%s-%s.svg";
 
     private static final String COLOR_RED = "red";
     private static final String COLOR_YELLOW = "yellow";
     private static final String COLOR_GREEN = "brightgreen";
 
+    private final String label;
     private final float coverage;
     private final float targetCoverage;
     private final String branchName;
     private final String changeTarget;
 
-    public Message(float coverage, float targetCoverage, String branchName, String changeTarget) {
+    public Message(String label, float coverage, float targetCoverage, String branchName, String changeTarget) {
+        this.label = label;
         this.coverage = Percent.roundFourAfterDigit(coverage);
         this.targetCoverage = Percent.roundFourAfterDigit(targetCoverage);
         this.branchName = branchName;
@@ -43,11 +45,12 @@ class Message {
     }
 
     public String forConsole() {
-        return String.format("%s coverage %s changed %s vs %s coverage %s",
-                this.branchName,
+        return String.format("%s : %s coverage %s changed %s vs %s coverage %s",
+                label,
+                branchName,
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, targetCoverage)),
-                this.changeTarget,
+                changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
     }
 
@@ -60,7 +63,8 @@ class Message {
             return "[![" + icon + "](" + shieldIoUrl(icon, yellowThreshold, greenThreshold) + ")](" + buildUrl + ")";
         } else {
             return "[![" + icon + "](" + jenkinsUrl + "/coverage-status-icon/" +
-                    "?branchName=" + this.branchName +
+                    "?label=" + label +
+                    "&branchName=" + branchName +
                     "&coverage=" + coverage +
                     "&changeTarget=" + changeTarget +
                     "&targetCoverage=" + targetCoverage +
@@ -69,11 +73,12 @@ class Message {
     }
 
     public String forStatusCheck() {
-        return String.format("%s coverage %s changed %s vs %s coverage %s",
-                this.branchName,
+        return String.format("%s : %s coverage %s changed %s vs %s coverage %s",
+                label,
+                branchName,
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, targetCoverage)),
-                this.changeTarget,
+                changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
     }
 
@@ -82,7 +87,7 @@ class Message {
         // dash should be encoded as two dash
         icon = icon.replace("-", "--");
         try {
-            return String.format(BADGE_TEMPLATE, URIUtil.encodePath(icon), color);
+            return String.format(BADGE_TEMPLATE, label, URIUtil.encodePath(icon), color);
         } catch (URIException e) {
             throw new RuntimeException(e);
         }
@@ -107,10 +112,10 @@ class Message {
      */
     public String forIcon() {
         return String.format("%s %s (%s) vs %s %s",
-                this.branchName,
+                branchName,
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, targetCoverage)),
-                this.changeTarget,
+                changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
     }
 

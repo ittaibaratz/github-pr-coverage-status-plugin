@@ -11,7 +11,6 @@ Code coverage icon for GitHub pull requests
   * [Configure access to GitHub](#configure-access-to-github)
   * [Configure master coverage source](#configure-master-coverage-source)
     * [Jenkins build](#jenkins-build)
-    * [Sonar](#sonar)
   * [Publish coverage for Pull Request](#publish-coverage-for-pull-request)
     * [GitHub Pull Request Builder Plugin](#github-pull-request-builder-plugin)
     * [Branch API Plugin](#branch-api-plugin)
@@ -58,19 +57,6 @@ To be able compare Pull Request coverage plugin needs master coverage for GitHub
 * Add *Record Master Coverage* post build step to build which tests your master.
 Coverage will be stored per repository URL
 
-#### Sonar
-
-You have the option to get the master coverage (base coverage) from your SonarQube instance. Otherwise the plugin will keep track of the master coverage in the project configuration file.
-
-* Goto ```Manage Jenkins```
-* Find section ```Coverage status for GitHub Pull Requests```
-* Fill ```Sonar URL``` field - e.g. `http://sonar.mycompany.com`
-* Turn On ```Use Sonar for master coverage```
-* Optionally use can specify your personal ```Sonar access token```.
-* The next pull request build will use SonarQube as the the source for master coverage
-
-The plugin will try to find the project in SonarQube based on the repository name. If more than one projects match, a warning is logged, and the first one will be used to get the coverage data.
-
 ### Publish coverage for pull request
 
 Depends on plugin which you are using to run (trigger) pull request in Jenkins.
@@ -103,9 +89,9 @@ where first one is Pull Request ID (number) and second link to repository
     ```step([$class: 'MasterCoverageAction', jacocoCounterType: 'INSTRUCTION', publishResultAs: 'statusCheck', scmVars: [GIT_URL: env.GIT_URL]])```
 * Trigger CompareCoverageAction to compare coverage and publish results (scmVars is needed for multibranch)
     *  ```step([$class: 'CompareCoverageAction', scmVars: [GIT_URL: env.GIT_URL]])```
-    * Optionally use can specify here jacoco counter type and sonar login and sonar password like this:
-        ```step([$class: 'CompareCoverageAction', jacocoCounterType: 'INSTRUCTION', sonarLogin: "login", sonarPassword: "password"])```
-    * You can also specify how the result will pe published (comment or status check). By default it will be published as a status check
+    * Optionally use can specify here jacoco counter type:
+        ```step([$class: 'CompareCoverageAction', jacocoCounterType: 'INSTRUCTION')```
+    * You can also specify how the result will pe published (comment or status check). By default, it will be published as a status check
         ```step([$class: 'MasterCoverageAction', jacocoCounterType: 'INSTRUCTION', publishResultAs: 'statusCheck', scmVars: [GIT_URL: env.GIT_URL]])```
 
 * Simple Multibranch Pipeline example

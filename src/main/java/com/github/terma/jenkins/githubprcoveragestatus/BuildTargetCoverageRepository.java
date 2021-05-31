@@ -18,6 +18,7 @@ limitations under the License.
 package com.github.terma.jenkins.githubprcoveragestatus;
 
 import java.io.PrintStream;
+import java.util.Map;
 
 public class BuildTargetCoverageRepository implements TargetCoverageRepository {
 
@@ -28,16 +29,16 @@ public class BuildTargetCoverageRepository implements TargetCoverageRepository {
     }
 
     @Override
-    public float get(CoverageMetaData coverageMetaData) {
-        if (coverageMetaData == null) return 0;
-        final Float coverage = Configuration.DESCRIPTOR.getCoverageByCoverageMetaData().get(coverageMetaData);
-        if (coverage == null) {
+    public Map<String, ReportData> get(CoverageMetaData coverageMetaData) {
+        if (coverageMetaData == null) return null;
+        final Map<String, ReportData> coverageData = Configuration.DESCRIPTOR.getCoverageByCoverageMetaData().get(coverageMetaData);
+        if (coverageData == null) {
             buildLog.println("Can't find target coverage repository: " + coverageMetaData
                     + " in stored: " + Configuration.DESCRIPTOR.getCoverageByCoverageMetaData() + "\n"
                     + "Make sure that you have run build with step: " + BranchCoverageAction.DISPLAY_NAME);
-            return 0;
+            return null;
         }
-        return coverage;
+        return coverageData;
     }
 
 }

@@ -17,6 +17,8 @@ limitations under the License.
 */
 package com.github.terma.jenkins.githubprcoveragestatus;
 
+import java.util.Map;
+
 interface TargetCoverageRepository {
 
     /**
@@ -24,6 +26,6 @@ interface TargetCoverageRepository {
      *
      * @param coverageMetaData@return master coverage or zero if coverage don't exist or not tracked before
      */
-    float get(CoverageMetaData coverageMetaData);
+    Map<String, ReportData> get(CoverageMetaData coverageMetaData);
 
 }

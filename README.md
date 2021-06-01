@@ -106,6 +106,9 @@ where first one is Pull Request ID (number) and second link to repository
 
 * Simple Multibranch Pipeline example
 ```groovy
+import com.github.terma.jenkins.githubprcoveragestatus.*;
+import java.util.*;
+
 def scmVars; 
 pipeline {
   agent {
@@ -159,6 +162,8 @@ pipeline {
 
 ### Note
 - may require script approval
+- imports are necessary 
+
 ## Troubleshooting
 
 ### No coverage picture and my Jenkins is in private network and not accessible for GitHub

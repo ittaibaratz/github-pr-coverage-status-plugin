@@ -25,9 +25,8 @@ import org.apache.tools.ant.DirectoryScanner;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 @SuppressWarnings("WeakerAccess")
 final class GetCoverageCallable extends MasterToSlaveFileCallable<Map<String, ReportData>> implements CoverageRepository {
@@ -36,14 +35,16 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Map<String, Re
     private String jacocoCounterType = "";
     private List<String> coverageFilePaths;
     private final List<ReportMetaData> reportsMetaDataList;
-    private Map<String, String> keyByFilePath = new HashMap<>();
-    private Map<String, ReportData> coverageByKey = new HashMap<>();
-    private final Logger LOGGER = Logger.getLogger(GetCoverageCallable.class.getName());
+    private Map<String, String> labelByFilePath;
+    private Map<String, ReportData> coverageByLabel;
+    private transient PrintStream buildLog;
 
     GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType, List<ReportMetaData> reportsMetaDataList) {
         this.disableSimpleCov = disableSimpleCov;
         this.jacocoCounterType = jacocoCounterType;
         this.reportsMetaDataList = reportsMetaDataList;
+        this.labelByFilePath = new HashMap<>();
+        this.coverageByLabel = new HashMap<>();
     }
 
     /**
@@ -57,57 +58,61 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Map<String, Re
             ds = Util.createFileSet(ws, path).getDirectoryScanner();
             files = ds.getIncludedFiles();
             for (String file: files) {
-                this.coverageFilePaths.add(new File(ds.getBasedir(), file).getAbsolutePath());
+                coverageFilePaths.add(new File(ds.getBasedir(), file).getAbsolutePath());
             }
         }
-        LOGGER.log(Level.INFO, this.coverageFilePaths.toString());
+        buildLog.println("coverageFilePaths: " + coverageFilePaths);
     }
 
     /**
-     * Add all coverage to "repo" key, reportsMetaDataList should not contain ReportMetaData with "repo" key
+     * Add all coverage to "repo" label, reportsMetaDataList should not contain ReportMetaData with "repo" label
      */
-    private void categorizeFilePathsToKeys() throws Exception {
-        String key;
-        coverageByKey.put("repo", new ReportData());
+    private void categorizeFilePathsToLabels() throws Exception {
+        String label;
+        coverageByLabel.put("repo", new ReportData());
 
-        for(ReportMetaData reportMetaData: this.reportsMetaDataList) {
-            key = reportMetaData.getKey();
-            // coverageByKey -> keys.forEach(key -> new ReportData())
-            if(!coverageByKey.containsKey(key)) coverageByKey.put(key, new ReportData());
-            else throw new Exception("repeated key: " + key);
+        for(ReportMetaData reportMetaData: reportsMetaDataList) {
+            label = reportMetaData.getLabel();
+            if(!coverageByLabel.containsKey(label)) coverageByLabel.put(label, new ReportData());
+            else throw new Exception("Repeated label: " + label);
+        }
 
-            for(String filePath: this.coverageFilePaths) {
+        for(String filePath: coverageFilePaths) {
+            for(ReportMetaData reportMetaData: reportsMetaDataList) {
+                label = reportMetaData.getLabel();
                 if(reportMetaData.validate(filePath)) {
-                    if(!keyByFilePath.containsKey(filePath)) keyByFilePath.put(filePath, key);
-                    else throw new Exception("conflicting keys, coverage path: "
+                    if(!labelByFilePath.containsKey(filePath)) labelByFilePath.put(filePath, label);
+                    else throw new Exception("Conflicting labels for coverage path: "
                             + filePath
                             + " maps to "
-                            + keyByFilePath.get(filePath)
+                            + labelByFilePath.get(filePath)
                             + " and "
-                            + key
+                            + label
                     );
                 }
             }
+
         }
+
+        buildLog.println("labelByFilePath: " + labelByFilePath);
     }
 
     private void generateCoverageData() {
-        String key;
         ReportData reportData;
-        for(String filePath: this.coverageFilePaths) {
-            key = keyByFilePath.get(filePath);
+        for(String filePath: coverageFilePaths) {
             if (filePath.contains("cobertura.xml") || filePath.contains("cobertura-coverage.xml"))
                 reportData = new CoberturaParser().get(filePath);
             else
                 reportData = new JacocoParser(jacocoCounterType).get(filePath);
-            
-            coverageByKey.get(key).add(reportData);
-            coverageByKey.get("repo").add(reportData);
+            if(labelByFilePath.containsKey(filePath)) coverageByLabel.get(labelByFilePath.get(filePath)).add(reportData);
+            coverageByLabel.get("repo").add(reportData);
         }
+        buildLog.println("coverageByLabel: " + coverageByLabel);
     }
 
     @Override
-    public Map<String, ReportData> get(final FilePath workspace) throws IOException, InterruptedException {
+    public Map<String, ReportData> get(PrintStream buildLog, final FilePath workspace) throws IOException, InterruptedException {
+        this.buildLog = buildLog;
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }
@@ -120,13 +125,13 @@ final class GetCoverageCallable extends MasterToSlaveFileCallable<Map<String, Re
     public Map<String, ReportData> invoke(final File ws, final VirtualChannel channel) throws IOException {
         getAllReportPaths(ws);
         try {
-            categorizeFilePathsToKeys();
+            categorizeFilePathsToLabels();
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new IOException(e.getMessage());
         }
         generateCoverageData();
 
-        return this.coverageByKey;
+        return coverageByLabel;
     }
 
 }

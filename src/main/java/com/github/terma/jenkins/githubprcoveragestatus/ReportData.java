@@ -20,7 +20,7 @@ public class ReportData {
     }
 
     public float getRate() {
-        return this.covered / this.total;
+        return  (float) covered / (float) total;
     }
 
     @Override

@@ -22,12 +22,13 @@ import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 interface PullRequestRepository {
 
-    GHPullRequest getPullRequestFor(String repo, String branch, String sha) throws IOException;
+    GHPullRequest getPullRequestFor(PrintStream buildLog, String repo, String branch, String sha) throws IOException;
 
-    GHRepository getGitHubRepository(final String gitHubUrl) throws IOException;
+    GHRepository getGitHubRepository(PrintStream buildLog, final String gitHubUrl) throws IOException;
 
     void comment(GHRepository ghRepository, int prId, String message) throws IOException;
 

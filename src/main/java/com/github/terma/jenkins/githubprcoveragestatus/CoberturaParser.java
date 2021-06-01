@@ -20,8 +20,6 @@ package com.github.terma.jenkins.githubprcoveragestatus;
 import javax.xml.stream.*;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,8 +27,6 @@ import java.util.regex.Pattern;
  * <a href="http://cobertura.sourceforge.net/xml/coverage-04.dtd">Coverage DTD</a>
  */
 class CoberturaParser implements CoverageReportParser {
-
-    private final Logger LOGGER = Logger.getLogger(CoverageReportParser.class.getName());
 
     private static String findFirst(String string, String pattern) {
         String result = findFirstOrNull(string, pattern);
@@ -107,9 +103,6 @@ class CoberturaParser implements CoverageReportParser {
                 xmlStreamReader.next();
             }
             xmlStreamReader.close();
-            LOGGER.log(Level.INFO, String.format(
-                    "linesCovered = %d, linesValid = %d, branchesCovered = %d, branchesValid = %d, source = %s",
-                    linesCovered, linesValid, branchesCovered, branchesValid, source));
 
             return new ReportData(linesCovered, linesValid);
 

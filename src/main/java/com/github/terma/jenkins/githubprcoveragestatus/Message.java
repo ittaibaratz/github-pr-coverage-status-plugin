@@ -54,6 +54,11 @@ class Message {
                 Percent.toWholeNoSignString(targetCoverage));
     }
 
+    @Override
+    public String toString() {
+        return forConsole();
+    }
+
     public String forComment(
             final String buildUrl, final String jenkinsUrl,
             final int yellowThreshold, final int greenThreshold,
@@ -73,13 +78,17 @@ class Message {
     }
 
     public String forStatusCheck() {
-        return String.format("%s : %s coverage %s changed %s vs %s coverage %s",
+        return String.format("%s : %s %s (%s) vs %s %s",
                 label,
                 branchName,
                 Percent.toWholeNoSignString(coverage),
                 Percent.toString(Percent.change(coverage, targetCoverage)),
                 changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
+    }
+
+    public boolean hasFailed(final int yellowThreshold, final int greenThreshold) {
+        return !getColor(yellowThreshold, greenThreshold).equals(COLOR_GREEN);
     }
 
     private String shieldIoUrl(String icon, final int yellowThreshold, final int greenThreshold) {

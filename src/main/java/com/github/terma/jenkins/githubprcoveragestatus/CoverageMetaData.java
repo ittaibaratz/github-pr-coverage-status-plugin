@@ -1,5 +1,6 @@
 package com.github.terma.jenkins.githubprcoveragestatus;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -11,7 +12,7 @@ public class CoverageMetaData {
     public CoverageMetaData(String gitUrl, String gitBranch, List<ReportMetaData> reportMetaDataList) {
         this.gitUrl = gitUrl;
         this.gitBranch = gitBranch;
-        this.reportMetaDataList = reportMetaDataList;
+        this.reportMetaDataList = reportMetaDataList!=null ? reportMetaDataList : new ArrayList<>();
     }
 
     public String getGitUrl() {

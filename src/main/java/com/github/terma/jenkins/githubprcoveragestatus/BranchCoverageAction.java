@@ -100,16 +100,19 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
         final String gitBranch = PrIdAndUrlUtils.getGitBranch(scmVars, build, listener);
         buildLog.println("Git URL: " + gitUrl);
         buildLog.println("Git Branch: " + gitBranch);
+
         CoverageMetaData coverageMetaData = new CoverageMetaData(gitUrl, gitBranch, reportMetaDataList);
+        buildLog.println("CoverageMetaData: " + coverageMetaData);
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
 
-        Map<String, ReportData> branchCoverageData = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, reportMetaDataList)
-                .get(workspace);
-        buildLog.println("Branch coverage....");
-        for(String key: branchCoverageData.keySet()) {
-            buildLog.println(key + ": " + Percent.toString(branchCoverageData.get(key).getRate()));
+        buildLog.println("branch coverage....");
+        Map<String, ReportData> branchCoverageData = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, coverageMetaData.getReportMetaDataList())
+                .get(buildLog, workspace);
+        buildLog.println("coverage: " + branchCoverageData);
+        for(String label: branchCoverageData.keySet()) {
+            buildLog.println(label + ": " + Percent.toString(branchCoverageData.get(label).getRate()));
         }
         Configuration.setBranchCoverage(coverageMetaData, branchCoverageData);
     }

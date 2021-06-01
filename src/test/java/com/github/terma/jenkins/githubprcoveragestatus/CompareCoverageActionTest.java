@@ -69,7 +69,7 @@ public class CompareCoverageActionTest {
         ServiceRegistry.setCoverageRepository(coverageRepository);
         ServiceRegistry.setSettingsRepository(settingsRepository);
         ServiceRegistry.setPullRequestRepository(pullRequestRepository);
-        when(pullRequestRepository.getGitHubRepository(GIT_URL)).thenReturn(ghRepository);
+        when(pullRequestRepository.getGitHubRepository(System.out, GIT_URL)).thenReturn(ghRepository);
         when(listener.getLogger()).thenReturn(System.out);
     }
 
@@ -113,7 +113,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "repo : feature-1 coverage 0.0% changed 0.0% vs master coverage 0.0%"
+                "repo : feature-1 0.0% (0.0%) vs master 0.0%"
         );
     }
 
@@ -133,7 +133,7 @@ public class CompareCoverageActionTest {
                 "fh3k2l",
                 GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "repo : feature-1 coverage 95.5% changed +6.8% vs master coverage 88.7%"
+                "repo : feature-1 95.5% (+6.8%) vs master 88.7%"
         );
     }
 
@@ -151,9 +151,9 @@ public class CompareCoverageActionTest {
         verify(pullRequestRepository).createCommitStatus(
                 ghRepository,
                 "fh3k2l",
-                GHCommitState.FAILURE,
+                GHCommitState.SUCCESS,
                 "aaa/job/a",
-                "repo : feature-1 coverage 90.32% changed -5.1% vs master coverage 95.42%"
+                "repo : feature-1 90.32% (-5.1%) vs master 95.42%"
         );
     }
 
@@ -214,7 +214,7 @@ public class CompareCoverageActionTest {
         ReportData buildReportData = mock(ReportData.class);
         when(buildReportData.getRate()).thenReturn(prCoverage);
         coverageData.put("repo", buildReportData);
-        when(coverageRepository.get(null)).thenReturn(coverageData);
+        when(coverageRepository.get(System.out, null)).thenReturn(coverageData);
         initMocks();
     }
 

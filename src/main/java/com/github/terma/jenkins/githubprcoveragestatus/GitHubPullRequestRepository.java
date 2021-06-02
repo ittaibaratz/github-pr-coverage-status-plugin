@@ -1,19 +1,110 @@
+///*
+//
+//    Copyright 2015-2016 Artem Stasiuk
+//
+//Licensed under the Apache License, Version 2.0 (the "License");
+//you may not use this file except in compliance with the License.
+//You may obtain a copy of the License at
+//
+//    http://www.apache.org/licenses/LICENSE-2.0
+//
+//Unless required by applicable law or agreed to in writing, software
+//distributed under the License is distributed on an "AS IS" BASIS,
+//WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//See the License for the specific language governing permissions and
+//limitations under the License.
+//
+//*/
+//package com.github.terma.jenkins.githubprcoveragestatus;
+//
+//import org.kohsuke.github.*;
+//
+//import java.io.FileNotFoundException;
+//import java.io.IOException;
+//
+//public class GitHubPullRequestRepository implements PullRequestRepository {
+//
+//    @Override
+//    public GHPullRequest getPullRequestFor(String gitHubUrl, String branch, String sha) throws IOException {
+//        for (GHPullRequest pr : getGitHubRepository(gitHubUrl).getPullRequests(GHIssueState.OPEN)) {
+//            if (pr.getHead().getRef().equals(branch) && pr.getHead().getSha().equals(sha)) {
+//                return pr;
+//            }
+//        }
+//        throw new IOException(String.format("No PR found for %s %s @ %s", gitHubUrl, branch, sha));
+//    }
+//
+//    @Override
+//    public GHRepository getGitHubRepository(final String gitHubUrl) throws IOException {
+//        GitHub gitHub = getGitHub();
+//
+//        try {
+//            if (gitHub.getRateLimit().remaining == 0) {
+//                throw new IOException("Exceeded rate limit for repository");
+//            }
+//        } catch (FileNotFoundException ex) {
+//            throw new IOException("Rate limit API not found.");
+//        } catch (IOException ex) {
+//            throw new IOException("Error while accessing rate limit API", ex);
+//        }
+//
+//        final String userRepo = GitUtils.getUserRepo(gitHubUrl);
+//
+//        try {
+//            return gitHub.getRepository(userRepo);
+//        } catch (IOException ex) {
+//            throw new IOException("Could not retrieve GitHub repository named " + userRepo
+//                    + " (Do you have properly set 'GitHub project' field in job configuration?)", ex);
+//        }
+//    }
+//
+//    private static GitHub getGitHub() throws IOException {
+//        final SettingsRepository settingsRepository = ServiceRegistry.getSettingsRepository();
+//        final String apiUrl = settingsRepository.getGitHubApiUrl();
+//        final String personalAccessToken = settingsRepository.getPersonalAccessToken();
+//
+//        if (apiUrl != null) {
+//            if (personalAccessToken != null) {
+//                return GitHub.connectToEnterprise(apiUrl, personalAccessToken);
+//            } else {
+//                return GitHub.connectToEnterpriseAnonymously(apiUrl);
+//            }
+//        } else {
+//            if (personalAccessToken != null) {
+//                return GitHub.connectUsingOAuth(personalAccessToken);
+//            } else {
+//                return GitHub.connectAnonymously();
+//            }
+//        }
+//    }
+//
+//    @Override
+//    public void comment(final GHRepository ghRepository, final int prId, final String message) throws IOException {
+//        ghRepository.getPullRequest(prId).comment(message);
+//    }
+//
+//    @Override
+//    public void createCommitStatus(
+//            GHRepository ghRepository,
+//            String sha1, GHCommitState state,
+//            String targetUrl,
+//            String description
+//    ) throws IOException {
+//        ghRepository.createCommitStatus(sha1, state, targetUrl, description, "test-coverage-plugin");
+//    }
+//}
+
 /*
-
     Copyright 2015-2016 Artem Stasiuk
-
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
 */
 package com.github.terma.jenkins.githubprcoveragestatus;
 
@@ -21,12 +112,13 @@ import org.kohsuke.github.*;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintStream;
 
 public class GitHubPullRequestRepository implements PullRequestRepository {
 
     @Override
-    public GHPullRequest getPullRequestFor(String gitHubUrl, String branch, String sha) throws IOException {
-        for (GHPullRequest pr : getGitHubRepository(gitHubUrl).getPullRequests(GHIssueState.OPEN)) {
+    public GHPullRequest getPullRequestFor(PrintStream buildLog, String gitHubUrl, String branch, String sha) throws IOException {
+        for (GHPullRequest pr : getGitHubRepository(buildLog, gitHubUrl).getPullRequests(GHIssueState.OPEN)) {
             if (pr.getHead().getRef().equals(branch) && pr.getHead().getSha().equals(sha)) {
                 return pr;
             }
@@ -35,11 +127,15 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
     }
 
     @Override
-    public GHRepository getGitHubRepository(final String gitHubUrl) throws IOException {
-        GitHub gitHub = getGitHub();
+    public GHRepository getGitHubRepository(PrintStream buildLog, final String gitHubUrl) throws IOException {
+        GitHub gitHub = getGitHub(buildLog);
 
         try {
-            if (gitHub.getRateLimit().remaining == 0) {
+            buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Calling github rate limit....");
+            GHRateLimit ghRateLimit = gitHub.getRateLimit();
+            buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Github rate limit: " + ghRateLimit);
+            if (ghRateLimit.remaining == 0) {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Exceeded rate limit for repository");
                 throw new IOException("Exceeded rate limit for repository");
             }
         } catch (FileNotFoundException ex) {
@@ -58,7 +154,7 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
         }
     }
 
-    private static GitHub getGitHub() throws IOException {
+    private static GitHub getGitHub(PrintStream buildLog) throws IOException {
         final SettingsRepository settingsRepository = ServiceRegistry.getSettingsRepository();
         final String apiUrl = settingsRepository.getGitHubApiUrl();
         final String personalAccessToken = settingsRepository.getPersonalAccessToken();
@@ -71,8 +167,10 @@ public class GitHubPullRequestRepository implements PullRequestRepository {
             }
         } else {
             if (personalAccessToken != null) {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Connecting to Github with personalAccessToken");
                 return GitHub.connectUsingOAuth(personalAccessToken);
             } else {
+                buildLog.println(CompareCoverageAction.BUILD_LOG_PREFIX + "Connecting to Github anonymously");
                 return GitHub.connectAnonymously();
             }
         }

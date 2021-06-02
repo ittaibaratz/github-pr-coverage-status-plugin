@@ -18,45 +18,32 @@ limitations under the License.
 package com.github.terma.jenkins.githubprcoveragestatus;
 
 import java.io.PrintStream;
+import java.util.List;
 
 public class ServiceRegistry {
 
-    private static MasterCoverageRepository masterCoverageRepository;
+    private static TargetCoverageRepository targetCoverageRepository;
     private static CoverageRepository coverageRepository;
     private static SettingsRepository settingsRepository;
     private static PullRequestRepository pullRequestRepository;
 
-    public static MasterCoverageRepository getMasterCoverageRepository(PrintStream buildLog, final String login, final String password) {
-        if (masterCoverageRepository != null) return masterCoverageRepository;
+    public static TargetCoverageRepository getTargetCoverageRepository(PrintStream buildLog) {
+        if (targetCoverageRepository != null) return targetCoverageRepository;
 
-        if (Configuration.isUseSonarForMasterCoverage()) {
-            final String sonarUrl = Configuration.getSonarUrl();
-            if (login != null && password != null) {
-                buildLog.println("take master coverage from sonar by login/password");
-                return new SonarMasterCoverageRepository(sonarUrl, login, password, buildLog);
-            }
-            if (Configuration.getSonarToken() != null) {
-                buildLog.println("take master coverage from sonar by token");
-                return new SonarMasterCoverageRepository(sonarUrl, Configuration.getSonarToken(), "", buildLog);
-            }
-            buildLog.println("take master coverage from sonar by login/password");
-            return new SonarMasterCoverageRepository(sonarUrl, Configuration.getSonarLogin(), Configuration.getSonarPassword(), buildLog);
-        } else {
-            buildLog.println("use default coverage repo");
-            return new BuildMasterCoverageRepository(buildLog);
-        }
+        return new BuildTargetCoverageRepository(buildLog);
     }
 
-    public static void setMasterCoverageRepository(MasterCoverageRepository masterCoverageRepository) {
-        ServiceRegistry.masterCoverageRepository = masterCoverageRepository;
+    public static void setTargetCoverageRepository(TargetCoverageRepository targetCoverageRepository) {
+        ServiceRegistry.targetCoverageRepository = targetCoverageRepository;
     }
 
     public static CoverageRepository getCoverageRepository(
             final boolean disableSimpleCov,
-            final String jacocoCoverageCounter
+            final String jacocoCoverageCounter,
+            List<ReportMetaData> reportsMetaData
     ) {
         return coverageRepository != null ? coverageRepository
-                : new GetCoverageCallable(disableSimpleCov, jacocoCoverageCounter);
+                : new GetCoverageCallable(disableSimpleCov, jacocoCoverageCounter, reportsMetaData);
     }
 
     public static void setCoverageRepository(CoverageRepository coverageRepository) {

@@ -24,50 +24,71 @@ import org.apache.commons.httpclient.util.URIUtil;
 class Message {
 
     //see http://shields.io/ for reference
-    private static final String BADGE_TEMPLATE = "https://img.shields.io/badge/coverage-%s-%s.svg";
+    private static final String BADGE_TEMPLATE = "https://img.shields.io/badge/%s-%s-%s.svg";
 
     private static final String COLOR_RED = "red";
     private static final String COLOR_YELLOW = "yellow";
     private static final String COLOR_GREEN = "brightgreen";
 
+    private final String label;
     private final float coverage;
-    private final float masterCoverage;
+    private final float targetCoverage;
+    private final String branchName;
+    private final String changeTarget;
 
-    public Message(float coverage, float masterCoverage) {
+    public Message(String label, float coverage, float targetCoverage, String branchName, String changeTarget) {
+        this.label = label;
         this.coverage = Percent.roundFourAfterDigit(coverage);
-        this.masterCoverage = Percent.roundFourAfterDigit(masterCoverage);
+        this.targetCoverage = Percent.roundFourAfterDigit(targetCoverage);
+        this.branchName = branchName;
+        this.changeTarget = changeTarget;
     }
 
-    public String forConsole(final String targetBranch) {
-        return String.format("Coverage %s changed %s vs %s %s",
+    public String forConsole() {
+        return String.format("%s : %s coverage %s changed %s vs %s coverage %s",
+                label,
+                branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                targetBranch,
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
+    }
+
+    @Override
+    public String toString() {
+        return forConsole();
     }
 
     public String forComment(
             final String buildUrl, final String jenkinsUrl,
             final int yellowThreshold, final int greenThreshold,
-            final boolean useShieldsIo, final String targetBranch) {
-        final String icon = forIcon(targetBranch);
+            final boolean useShieldsIo) {
+        final String icon = forIcon();
         if (useShieldsIo) {
             return "[![" + icon + "](" + shieldIoUrl(icon, yellowThreshold, greenThreshold) + ")](" + buildUrl + ")";
         } else {
             return "[![" + icon + "](" + jenkinsUrl + "/coverage-status-icon/" +
-                    "?coverage=" + coverage +
-                    "&masterCoverage=" + masterCoverage +
-                    "&targetBranch=" + targetBranch +
+                    "?label=" + label +
+                    "&branchName=" + branchName +
+                    "&coverage=" + coverage +
+                    "&changeTarget=" + changeTarget +
+                    "&targetCoverage=" + targetCoverage +
                     ")](" + buildUrl + ")";
         }
     }
 
-    public String forStatusCheck(final String targetBranch) {
-        return String.format("Coverage %s changed %s vs %s %s",
+    public String forStatusCheck() {
+        return String.format("%s : %s %s (%s) vs %s %s",
+                label,
+                branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                targetBranch,
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
+    }
+
+    public boolean hasFailed(final int yellowThreshold, final int greenThreshold) {
+        return !getColor(yellowThreshold, greenThreshold).equals(COLOR_GREEN);
     }
 
     private String shieldIoUrl(String icon, final int yellowThreshold, final int greenThreshold) {
@@ -75,7 +96,7 @@ class Message {
         // dash should be encoded as two dash
         icon = icon.replace("-", "--");
         try {
-            return String.format(BADGE_TEMPLATE, URIUtil.encodePath(icon), color);
+            return String.format(BADGE_TEMPLATE, label, URIUtil.encodePath(icon), color);
         } catch (URIException e) {
             throw new RuntimeException(e);
         }
@@ -84,7 +105,7 @@ class Message {
     private String getColor(int yellowThreshold, int greenThreshold) {
         String color = COLOR_GREEN;
         final int coveragePercent = Percent.of(coverage);
-        final boolean isCoverageHigher = Percent.change(coverage, masterCoverage) >= 0;
+        final boolean isCoverageHigher = Percent.change(coverage, targetCoverage) >= 0;
         if (isCoverageHigher) {
             return color;
         } else if (coveragePercent < yellowThreshold) {
@@ -96,14 +117,15 @@ class Message {
     }
 
     /**
-     * Example: 92% (+23%) vs master 70%
+     * Example: PR-12 92% (+23%) vs master 70%
      */
-    public String forIcon(final String targetBranch) {
-        return String.format("%s (%s) vs %s %s",
+    public String forIcon() {
+        return String.format("%s %s (%s) vs %s %s",
+                branchName,
                 Percent.toWholeNoSignString(coverage),
-                Percent.toString(Percent.change(coverage, masterCoverage)),
-                targetBranch,
-                Percent.toWholeNoSignString(masterCoverage));
+                Percent.toString(Percent.change(coverage, targetCoverage)),
+                changeTarget,
+                Percent.toWholeNoSignString(targetCoverage));
     }
 
 }

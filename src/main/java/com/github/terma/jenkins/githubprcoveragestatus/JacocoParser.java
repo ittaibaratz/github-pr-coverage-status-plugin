@@ -60,7 +60,7 @@ class JacocoParser implements CoverageReportParser {
     }
 
     @Override
-    public float get(String jacocoFilePath) {
+    public ReportData get(String jacocoFilePath) {
         final String content;
         try {
             content = FileUtils.readFileToString(new File(jacocoFilePath));
@@ -76,11 +76,14 @@ class JacocoParser implements CoverageReportParser {
         final float missed = getByXpath(jacocoFilePath, content, getMissedXpath(coverageCounterType));
         final float covered = getByXpath(jacocoFilePath,content, getCoverageXpath(coverageCounterType));
         final float coverage = covered + missed;
-        if (coverage == 0) {
-            return 0;
-        } else {
-            return covered / (coverage);
-        }
+
+        return new ReportData((int)covered, (int)coverage);
+
+//        if (coverage == 0) {
+//            return 0;
+//        } else {
+//            return covered / (coverage);
+//        }
     }
 
     private boolean isValidCoverageCounter(String coverageCounter) {

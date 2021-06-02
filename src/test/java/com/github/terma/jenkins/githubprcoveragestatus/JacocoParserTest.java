@@ -29,7 +29,7 @@ public class JacocoParserTest {
         String filePath = JacocoParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/JacocoParserTest/jacoco.xml").getFile();
 
-        Assert.assertEquals(0.22, new JacocoParser("LINE").get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(48, 217), new JacocoParser("LINE").get(filePath));
     }
 
     @Test
@@ -37,7 +37,7 @@ public class JacocoParserTest {
         String filePath = JacocoParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/JacocoParserTest/jacoco-no-code.xml").getFile();
 
-        Assert.assertEquals(0, new JacocoParser("LINE").get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(), new JacocoParser("LINE").get(filePath));
     }
 
     @Test
@@ -45,7 +45,7 @@ public class JacocoParserTest {
         String filePath = JacocoParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/JacocoParserTest/jacoco.xml").getFile();
 
-        Assert.assertEquals(0.22, new JacocoParser(null).get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(243, 960), new JacocoParser(null).get(filePath));
     }
 
     @Test
@@ -53,7 +53,7 @@ public class JacocoParserTest {
         String filePath = JacocoParserTest.class.getResource(
                 "/com/github/terma/jenkins/githubprcoveragestatus/JacocoParserTest/jacoco.xml").getFile();
 
-        Assert.assertEquals(0.22, new JacocoParser("random").get(filePath), 0.1);
+        Assert.assertEquals(new ReportData(243, 960), new JacocoParser("random").get(filePath));
     }
 
     @Test

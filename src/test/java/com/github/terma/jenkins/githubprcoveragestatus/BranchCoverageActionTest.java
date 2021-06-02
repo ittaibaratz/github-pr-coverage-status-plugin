@@ -23,13 +23,13 @@ import org.mockito.Mockito;
 
 import java.io.IOException;
 
-public class MasterCoverageActionTest {
+public class BranchCoverageActionTest {
 
     private Build build = Mockito.mock(Build.class);
 
     @Test
     public void skipStepIfResultOfBuildIsNotSuccess() throws IOException, InterruptedException {
-        new MasterCoverageAction().perform(build, null, null, null);
+        new BranchCoverageAction().perform(build, null, null, null);
     }
 
 }

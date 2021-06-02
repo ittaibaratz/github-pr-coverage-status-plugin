@@ -17,13 +17,15 @@ limitations under the License.
 */
 package com.github.terma.jenkins.githubprcoveragestatus;
 
-interface MasterCoverageRepository {
+import java.util.Map;
+
+interface TargetCoverageRepository {
 
     /**
      *
-     * @param gitHubRepoUrl - Git Hub Repository URL (full)
-     * @return master coverage or zero if coverage don't exist or not tracked before
+     *
+     * @param coverageMetaData@return master coverage or zero if coverage don't exist or not tracked before
      */
-    float get(final String gitHubRepoUrl);
+    Map<String, ReportData> get(CoverageMetaData coverageMetaData);
 
 }

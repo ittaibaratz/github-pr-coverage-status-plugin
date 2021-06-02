@@ -35,33 +35,47 @@ import org.kohsuke.stapler.DataBoundSetter;
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
+import java.util.List;
 import java.util.Map;
 
 /**
- * Record coverage of Jenkins Build and assume it as master coverage.
- * Master coverage will be used to compare Pull Request coverage and provide status message in Pull Request.
+ * Record branch coverage of Jenkins Build.
+ * Branch coverage will be used to compare Pull Request coverage and provide status message in Pull Request.
  * Optional step as coverage could be taken from Sonar. Take a look on {@link Configuration}
  *
  * @see CompareCoverageAction
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
+public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
 
-    public static final String DISPLAY_NAME = "Record Master Coverage";
+    public static final String DISPLAY_NAME = "Record Branch Coverage";
     private static final long serialVersionUID = 1L;
 
-
-    private Map<String, String> scmVars;
     private String jacocoCounterType;
+    private Map<String, String> scmVars;
+    private List<ReportMetaData> reportMetaDataList;
 
     @DataBoundConstructor
-    public MasterCoverageAction() {
+    public BranchCoverageAction() {
 
+    }
+
+    public String getJacocoCounterType() {
+        return jacocoCounterType;
     }
 
     // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
     public Map<String, String> getScmVars() {
         return scmVars;
+    }
+
+    public List<ReportMetaData> getReportMetaDataList() {
+        return reportMetaDataList;
+    }
+
+    @DataBoundSetter
+    public void setJacocoCounterType(String jacocoCounterType) {
+        this.jacocoCounterType = jacocoCounterType;
     }
 
     @DataBoundSetter
@@ -70,13 +84,10 @@ public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setJacocoCounterType(String jacocoCounterType) {
-        this.jacocoCounterType = jacocoCounterType;
+    public void setReportMetaDataList(List<ReportMetaData> reportMetaDataList) {
+        this.reportMetaDataList = reportMetaDataList;
     }
 
-    public String getJacocoCounterType() {
-        return jacocoCounterType;
-    }
 
     @SuppressWarnings("NullableProblems")
     @Override
@@ -86,13 +97,24 @@ public class MasterCoverageAction extends Recorder implements SimpleBuildStep {
 
         final PrintStream buildLog = listener.getLogger();
         final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
+        final String gitBranch = PrIdAndUrlUtils.getGitBranch(scmVars, build, listener);
+        buildLog.println("Git URL: " + gitUrl);
+        buildLog.println("Git Branch: " + gitBranch);
+
+        CoverageMetaData coverageMetaData = new CoverageMetaData(gitUrl, gitBranch, reportMetaDataList);
+        buildLog.println("CoverageMetaData: " + coverageMetaData);
 
         final boolean disableSimpleCov = ServiceRegistry.getSettingsRepository().isDisableSimpleCov();
         final String jacocoCounterType = this.jacocoCounterType;
-        final float masterCoverage = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType)
+
+        buildLog.println("branch coverage....");
+        Map<String, ReportData> branchCoverageData = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, coverageMetaData.getReportMetaDataList())
                 .get(workspace);
-        buildLog.println("Master coverage " + Percent.toString(masterCoverage));
-        Configuration.setMasterCoverage(gitUrl, masterCoverage);
+        buildLog.println("coverage: " + branchCoverageData);
+        for(String label: branchCoverageData.keySet()) {
+            buildLog.println(label + ": " + Percent.toString(branchCoverageData.get(label).getRate()));
+        }
+        Configuration.setBranchCoverage(coverageMetaData, branchCoverageData);
     }
 
     @Override

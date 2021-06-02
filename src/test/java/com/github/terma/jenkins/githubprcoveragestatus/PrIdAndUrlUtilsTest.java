@@ -31,8 +31,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class PrIdAndUrlUtilsTest {
 
@@ -53,7 +52,7 @@ public class PrIdAndUrlUtilsTest {
     @Before
     public void initMocks() throws IOException, InterruptedException {
         ServiceRegistry.setPullRequestRepository(pullRequestRepository);
-        when(pullRequestRepository.getPullRequestFor(anyString(), anyString(), anyString())).thenReturn(ghPullRequest);
+        when(pullRequestRepository.getPullRequestFor(anyObject(), anyString(), anyString(), anyString())).thenReturn(ghPullRequest);
 
         when(listener.getLogger()).thenReturn(logger);
         when(build.getEnvironment(listener)).thenReturn(envVars);

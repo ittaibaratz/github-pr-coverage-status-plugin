@@ -24,50 +24,50 @@ public class MessageTest {
 
     @Test
     public void buildNiceForConsole() {
-        Assert.assertEquals("Coverage 100.0% changed 0.0% vs master 100.0%", new Message(1, 1).forConsole("master"));
-        Assert.assertEquals("Coverage 0.0% changed 0.0% vs master 0.0%", new Message(0, 0).forConsole("master"));
-        Assert.assertEquals("Coverage 50.0% changed +50.0% vs master 0.0%", new Message(0.5f, 0).forConsole("master"));
-        Assert.assertEquals("Coverage 0.0% changed -50.0% vs master 50.0%", new Message(0, 0.5f).forConsole("master"));
-        Assert.assertEquals("Coverage 70.0% changed +20.0% vs master 50.0%", new Message(0.7f, 0.5f).forConsole("master"));
-        Assert.assertEquals("Coverage 0.07% changed +0.02% vs staging 0.05%", new Message(0.0007f, 0.0005f).forConsole("staging"));
-        Assert.assertEquals("Coverage 0.0% changed 0.0% vs develop 0.0%", new Message(0.000007f, 0.000005f).forConsole("develop"));
+        Assert.assertEquals("repo : feature-1 coverage 100.0% changed 0.0% vs master coverage 100.0%", new Message("repo", 1, 1, "feature-1", "master").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 0.0% changed 0.0% vs master coverage 0.0%", new Message("repo", 0, 0, "feature-1", "master").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 50.0% changed +50.0% vs master coverage 0.0%", new Message("repo", 0.5f, 0, "feature-1", "master").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 0.0% changed -50.0% vs master coverage 50.0%", new Message("repo", 0, 0.5f, "feature-1", "master").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 70.0% changed +20.0% vs master coverage 50.0%", new Message("repo", 0.7f, 0.5f, "feature-1", "master").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 0.07% changed +0.02% vs staging coverage 0.05%", new Message("repo", 0.0007f, 0.0005f, "feature-1", "staging").forConsole());
+        Assert.assertEquals("repo : feature-1 coverage 0.0% changed 0.0% vs develop coverage 0.0%", new Message("repo", 0.000007f, 0.000005f, "feature-1", "develop").forConsole());
     }
 
     @Test
     public void buildNiceForIcon() {
-        Assert.assertEquals("100.0% (0.0%) vs master 100.0%", new Message(1, 1).forIcon("master"));
-        Assert.assertEquals("0.0% (0.0%) vs master 0.0%", new Message(0, 0).forIcon("master"));
-        Assert.assertEquals("50.0% (+50.0%) vs master 0.0%", new Message(0.5f, 0).forIcon("master"));
-        Assert.assertEquals("0.0% (-50.0%) vs master 50.0%", new Message(0, 0.5f).forIcon("master"));
-        Assert.assertEquals("70.0% (+20.0%) vs master 50.0%", new Message(0.7f, 0.5f).forIcon("master"));
-        Assert.assertEquals("68.6% (-0.7%) vs master 69.3%", new Message(0.686f, 0.693f).forIcon("master"));
-        Assert.assertEquals("60.07% (+0.06%) vs master 60.01%", new Message(0.6007f, 0.6001f).forIcon("master"));
-        Assert.assertEquals("0.01% (+0.01%) vs staging 0.0%", new Message(0.00007f, 0.00001f).forIcon("staging"));
-        Assert.assertEquals("0.0% (0.0%) vs develop 0.0%", new Message(0.000007f, 0.000001f).forIcon("develop"));
+        Assert.assertEquals("feature-1 100.0% (0.0%) vs master 100.0%", new Message("repo", 1, 1, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 0.0% (0.0%) vs master 0.0%", new Message("repo", 0, 0, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 50.0% (+50.0%) vs master 0.0%", new Message("repo", 0.5f, 0, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 0.0% (-50.0%) vs master 50.0%", new Message("repo", 0, 0.5f, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 70.0% (+20.0%) vs master 50.0%", new Message("repo", 0.7f, 0.5f, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 68.6% (-0.7%) vs master 69.3%", new Message("repo", 0.686f, 0.693f, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 60.07% (+0.06%) vs master 60.01%", new Message("repo", 0.6007f, 0.6001f, "feature-1", "master").forIcon());
+        Assert.assertEquals("feature-1 0.01% (+0.01%) vs staging 0.0%", new Message("repo", 0.00007f, 0.00001f, "feature-1", "staging").forIcon());
+        Assert.assertEquals("feature-1 0.0% (0.0%) vs develop 0.0%", new Message("repo", 0.000007f, 0.000001f, "feature-1", "develop").forIcon());
     }
 
     @Test
     public void forCommentWithShieldIo() {
         String buildUrl = "http://terma.com/jenkins/job/ama";
         Assert.assertEquals(
-                "[![100.0% (0.0%) vs master 100.0%](https://img.shields.io/badge/coverage-100.0%25%20(0.0%25)%20vs%20master%20100.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
-                new Message(1, 1).forComment(buildUrl, null, 80, 90, true, "master"));
+                "[![feature-1 100.0% (0.0%) vs master 100.0%](https://img.shields.io/badge/repo-feature--1%20100.0%25%20(0.0%25)%20vs%20master%20100.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 1, 1, "feature-1", "master").forComment(buildUrl, null, 80, 90, true));
 
         Assert.assertEquals(
-                "[![0.0% (0.0%) vs master 0.0%](https://img.shields.io/badge/coverage-0.0%25%20(0.0%25)%20vs%20master%200.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
-                new Message(0, 0).forComment(buildUrl, null, 80, 90, true, "master"));
+                "[![feature-1 0.0% (0.0%) vs master 0.0%](https://img.shields.io/badge/repo-feature--1%200.0%25%20(0.0%25)%20vs%20master%200.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 0, 0, "feature-1", "master").forComment(buildUrl, null, 80, 90, true));
 
         Assert.assertEquals(
-                "[![50.0% (+50.0%) vs master 0.0%](https://img.shields.io/badge/coverage-50.0%25%20(%2B50.0%25)%20vs%20master%200.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
-                new Message(0.5f, 0).forComment(buildUrl, null, 80, 90, true, "master"));
+                "[![feature-1 50.0% (+50.0%) vs master 0.0%](https://img.shields.io/badge/repo-feature--1%2050.0%25%20(%2B50.0%25)%20vs%20master%200.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 0.5f, 0, "feature-1", "master").forComment(buildUrl, null, 80, 90, true));
 
         Assert.assertEquals(
-                "[![0.0% (-50.0%) vs staging 50.0%](https://img.shields.io/badge/coverage-0.0%25%20(--50.0%25)%20vs%20staging%2050.0%25-red.svg)](http://terma.com/jenkins/job/ama)",
-                new Message(0, 0.5f).forComment(buildUrl, null, 80, 90, true, "staging"));
+                "[![feature-1 0.0% (-50.0%) vs staging 50.0%](https://img.shields.io/badge/backend-feature--1%200.0%25%20(--50.0%25)%20vs%20staging%2050.0%25-red.svg)](http://terma.com/jenkins/job/ama)",
+                new Message("backend", 0, 0.5f, "feature-1", "staging").forComment(buildUrl, null, 80, 90, true));
 
         Assert.assertEquals(
-                "[![85.0% (+35.0%) vs develop 50.0%](https://img.shields.io/badge/coverage-85.0%25%20(%2B35.0%25)%20vs%20develop%2050.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
-                new Message(0.85f, 0.5f).forComment(buildUrl, null, 80, 90, true, "develop"));
+                "[![feature-1 85.0% (+35.0%) vs develop 50.0%](https://img.shields.io/badge/frontend-feature--1%2085.0%25%20(%2B35.0%25)%20vs%20develop%2050.0%25-brightgreen.svg)](http://terma.com/jenkins/job/ama)",
+                new Message("frontend", 0.85f, 0.5f, "feature-1", "develop").forComment(buildUrl, null, 80, 90, true));
     }
 
     @Test
@@ -75,24 +75,24 @@ public class MessageTest {
         String buildUrl = "http://terma.com/jenkins/job/ama";
         String jenkinsUrl = "jenkinsUrl";
         Assert.assertEquals(
-                "[![100.0% (0.0%) vs master 100.0%](jenkinsUrl/coverage-status-icon/?coverage=1.0&masterCoverage=1.0&targetBranch=master)](http://terma.com/jenkins/job/ama)",
-                new Message(1, 1).forComment(buildUrl, jenkinsUrl, 0, 0, false, "master"));
+                "[![feature-1 100.0% (0.0%) vs master 100.0%](jenkinsUrl/coverage-status-icon/?label=repo&branchName=feature-1&coverage=1.0&changeTarget=master&targetCoverage=1.0)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 1, 1, "feature-1", "master").forComment(buildUrl, jenkinsUrl, 0, 0, false));
 
         Assert.assertEquals(
-                "[![0.0% (0.0%) vs master 0.0%](jenkinsUrl/coverage-status-icon/?coverage=0.0&masterCoverage=0.0&targetBranch=master)](http://terma.com/jenkins/job/ama)",
-                new Message(0, 0).forComment(buildUrl, jenkinsUrl, 0, 0, false, "master"));
+                "[![feature-1 0.0% (0.0%) vs master 0.0%](jenkinsUrl/coverage-status-icon/?label=repo&branchName=feature-1&coverage=0.0&changeTarget=master&targetCoverage=0.0)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 0, 0, "feature-1", "master").forComment(buildUrl, jenkinsUrl, 0, 0, false));
 
         Assert.assertEquals(
-                "[![50.0% (+50.0%) vs master 0.0%](jenkinsUrl/coverage-status-icon/?coverage=0.5&masterCoverage=0.0&targetBranch=master)](http://terma.com/jenkins/job/ama)",
-                new Message(0.5f, 0).forComment(buildUrl, jenkinsUrl, 0, 0, false, "master"));
+                "[![feature-1 50.0% (+50.0%) vs master 0.0%](jenkinsUrl/coverage-status-icon/?label=repo&branchName=feature-1&coverage=0.5&changeTarget=master&targetCoverage=0.0)](http://terma.com/jenkins/job/ama)",
+                new Message("repo", 0.5f, 0, "feature-1", "master").forComment(buildUrl, jenkinsUrl, 0, 0, false));
 
         Assert.assertEquals(
-                "[![0.0% (-50.0%) vs staging 50.0%](jenkinsUrl/coverage-status-icon/?coverage=0.0&masterCoverage=0.5&targetBranch=staging)](http://terma.com/jenkins/job/ama)",
-                new Message(0, 0.5f).forComment(buildUrl, jenkinsUrl, 0, 0, false, "staging"));
+                "[![feature-1 0.0% (-50.0%) vs staging 50.0%](jenkinsUrl/coverage-status-icon/?label=backend&branchName=feature-1&coverage=0.0&changeTarget=staging&targetCoverage=0.5)](http://terma.com/jenkins/job/ama)",
+                new Message("backend", 0, 0.5f, "feature-1", "staging").forComment(buildUrl, jenkinsUrl, 0, 0, false));
 
         Assert.assertEquals(
-                "[![70.0% (+20.0%) vs develop 50.0%](jenkinsUrl/coverage-status-icon/?coverage=0.7&masterCoverage=0.5&targetBranch=develop)](http://terma.com/jenkins/job/ama)",
-                new Message(0.7f, 0.5f).forComment(buildUrl, jenkinsUrl, 0, 0, false, "develop"));
+                "[![feature-1 70.0% (+20.0%) vs develop 50.0%](jenkinsUrl/coverage-status-icon/?label=frontend&branchName=feature-1&coverage=0.7&changeTarget=develop&targetCoverage=0.5)](http://terma.com/jenkins/job/ama)",
+                new Message("frontend", 0.7f, 0.5f, "feature-1", "develop").forComment(buildUrl, jenkinsUrl, 0, 0, false));
     }
 
 }

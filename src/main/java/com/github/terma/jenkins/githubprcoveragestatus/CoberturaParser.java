@@ -17,9 +17,8 @@ limitations under the License.
 */
 package com.github.terma.jenkins.githubprcoveragestatus;
 
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
+import javax.xml.stream.*;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,20 +46,66 @@ class CoberturaParser implements CoverageReportParser {
         }
     }
 
-    @Override
-    public float get(String coberturaFilePath) {
+    private int getIntegerCoverageAttributeValue(XMLStreamReader xmlStreamReader, String filePath,
+                                                       String tag, String attribute) throws IllegalArgumentException {
         try {
-            String content = FileUtils.readFileToString(new File(coberturaFilePath));
-            float lineRate = Float.parseFloat(findFirst(content, "line-rate=['\"]([0-9.]+)['\"]"));
-            float branchRate = Float.parseFloat(findFirst(content, "branch-rate=['\"]([0-9.]+)['\"]"));
-            if (lineRate > 0 && branchRate == 0) {
-              return lineRate;
-            } else if (lineRate == 0 && branchRate > 0) {
-              return branchRate;
-            } else {
-              return lineRate / 2 + branchRate / 2;
+            return Integer.parseInt(xmlStreamReader
+                    .getAttributeValue(null, attribute));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(String.format("No attribute: %s found in tag: %s in file: %s",
+                    attribute, tag, filePath));
+        }
+    }
+
+    private float getFloatCoverageAttributeValue(XMLStreamReader xmlStreamReader, String filePath,
+                                                       String tag, String attribute) throws IllegalArgumentException {
+        try {
+            return Float.parseFloat(xmlStreamReader
+                    .getAttributeValue(null, attribute));
+        } catch (Exception ex) {
+            throw new IllegalArgumentException(String.format("No attribute: %s found in tag: %s in file: %s",
+                    attribute, tag, filePath));
+        }
+    }
+
+    @Override
+    public ReportData get(String coberturaFilePath) {
+        try {
+            int linesCovered = 0, linesValid = 0, branchesCovered = 0, branchesValid = 0;
+            float lineRate = 0.0f, branchRate = 0.0f;
+            String tag = null;
+            boolean foundCoverage = false;
+
+            // Read XML using StAX
+            XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
+            XMLStreamReader xmlStreamReader = xmlInputFactory
+                    .createXMLStreamReader(new FileInputStream(coberturaFilePath));
+            int eventType;
+            while(xmlStreamReader.hasNext()) {
+                eventType = xmlStreamReader.getEventType();
+                switch (eventType) {
+                    case XMLStreamReader.START_ELEMENT:
+                        tag = xmlStreamReader.getLocalName();
+                        if(tag.equals("coverage")) {
+                            lineRate = getFloatCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "line-rate");
+                            linesCovered = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "lines-covered");
+                            linesValid = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "lines-valid");
+                            branchRate = getFloatCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "branch-rate");
+                            branchesCovered = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath, tag, "branches-covered");
+                            branchesValid = getIntegerCoverageAttributeValue(xmlStreamReader, coberturaFilePath,tag, "branches-valid");
+                            foundCoverage = true;
+                        }
+                        break;
+                    case XMLStreamReader.END_ELEMENT:
+                        break;
+                }
+                if(foundCoverage) break;
+                xmlStreamReader.next();
             }
-        } catch (IOException e) {
+            xmlStreamReader.close();
+
+            return new ReportData(linesCovered, linesValid);
+        } catch (IOException | XMLStreamException e) {
             throw new RuntimeException(e);
         }
     }

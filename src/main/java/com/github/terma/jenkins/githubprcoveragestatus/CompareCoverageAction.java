@@ -39,8 +39,10 @@ import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Build step to publish pull request coverage status message to GitHub pull request.
@@ -48,11 +50,11 @@ import java.util.Map;
  * Workflow:
  * <ul>
  * <li>find coverage of current build and assume it as pull request coverage</li>
- * <li>find master coverage for repository URL could be taken by {@link MasterCoverageAction} or Sonar {@link Configuration}</li>
+ * <li>find branch coverage for repository URL taken by {@link BranchCoverageAction}</li>
  * <li>Publish nice status message to GitHub PR page</li>
  * </ul>
  *
- * @see MasterCoverageAction
+ * @see BranchCoverageAction
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
@@ -60,14 +62,30 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     public static final String BUILD_LOG_PREFIX = "[GitHub PR Status] ";
 
     private static final long serialVersionUID = 1L;
-    private String sonarLogin;
-    private String sonarPassword;
-    private Map<String, String> scmVars;
-    private String jacocoCoverageCounter;
     private String publishResultAs;
+    private String jacocoCounterType;
+    private Map<String, String> scmVars;
+    private List<ReportMetaData> reportMetaDataList;
 
     @DataBoundConstructor
     public CompareCoverageAction() {
+    }
+
+    public String getPublishResultAs() {
+        return publishResultAs;
+    }
+
+    public String getJacocoCounterType() {
+        return jacocoCounterType;
+    }
+
+    // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
+    public Map<String, String> getScmVars() {
+        return scmVars;
+    }
+
+    public List<ReportMetaData> getReportMetaDataList() {
+        return reportMetaDataList;
     }
 
     @DataBoundSetter
@@ -76,18 +94,8 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setSonarLogin(String sonarLogin) {
-        this.sonarLogin = sonarLogin;
-    }
-
-    @DataBoundSetter
-    public void setSonarPassword(String sonarPassword) {
-        this.sonarPassword = sonarPassword;
-    }
-
-    // TODO why is this needed for no public field ‘scmVars’ (or getter method) found in class ....
-    public Map<String, String> getScmVars() {
-        return scmVars;
+    public void setJacocoCounterType(String jacocoCounterType) {
+        this.jacocoCounterType = jacocoCounterType;
     }
 
     @DataBoundSetter
@@ -96,17 +104,10 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     @DataBoundSetter
-    public void setJacocoCoverageCounter(String jacocoCoverageCounter) {
-        this.jacocoCoverageCounter = jacocoCoverageCounter;
+    public void setReportMetaDataList(List<ReportMetaData> reportMetaDataList) {
+        this.reportMetaDataList = reportMetaDataList;
     }
 
-    public String getPublishResultAs() {
-        return publishResultAs;
-    }
-
-    public String getJacocoCoverageCounter() {
-        return jacocoCoverageCounter;
-    }
 
     // todo show message that addition comment in progress as it could take a while
     @SuppressWarnings("NullableProblems")
@@ -128,58 +129,76 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         final SettingsRepository settingsRepository = ServiceRegistry.getSettingsRepository();
 
-        final int prId = PrIdAndUrlUtils.getPrId(scmVars, build, listener);
-        final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
-
-        buildLog.println(BUILD_LOG_PREFIX + "getting master coverage...");
-        MasterCoverageRepository masterCoverageRepository = ServiceRegistry
-                .getMasterCoverageRepository(buildLog, sonarLogin, sonarPassword);
-        final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(gitUrl);
-        final float masterCoverage = masterCoverageRepository.get(gitUrl);
-        buildLog.println(BUILD_LOG_PREFIX + "master coverage: " + masterCoverage);
-
-        buildLog.println(BUILD_LOG_PREFIX + "collecting coverage...");
-        final float coverage = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCoverageCounter).get(workspace);
-        buildLog.println(BUILD_LOG_PREFIX + "build coverage: " + coverage);
-
-        final String targetBranch = Utils.getTargetBranch(build, listener);
-
-        final Message message = new Message(coverage, masterCoverage);
-        buildLog.println(BUILD_LOG_PREFIX + message.forConsole(targetBranch));
-
         final String buildUrl = Utils.getBuildUrl(build, listener);
 
         String jenkinsUrl = settingsRepository.getJenkinsUrl();
         if (jenkinsUrl == null) jenkinsUrl = Utils.getJenkinsUrlFromBuildUrl(buildUrl);
 
+        final int prId = PrIdAndUrlUtils.getPrId(scmVars, build, listener);
+        final String gitUrl = PrIdAndUrlUtils.getGitUrl(scmVars, build, listener);
+        final String changeTarget = PrIdAndUrlUtils.getChangeTarget(scmVars, build, listener);
+        final String branchName = PrIdAndUrlUtils.getBranchName(scmVars, build, listener);
+        buildLog.println(BUILD_LOG_PREFIX + "Git URL: " + gitUrl);
+        buildLog.println(BUILD_LOG_PREFIX + "Change Target: " + changeTarget);
+        buildLog.println(BUILD_LOG_PREFIX + "Branch Name: " + branchName);
+
+        CoverageMetaData coverageMetaData = new CoverageMetaData(gitUrl, changeTarget, reportMetaDataList);
+        buildLog.println(BUILD_LOG_PREFIX + "CoverageMetaData: " + coverageMetaData);
+
+        final GHRepository gitHubRepository = ServiceRegistry.getPullRequestRepository().getGitHubRepository(buildLog, gitUrl);
+
+        buildLog.println(BUILD_LOG_PREFIX + "getting target coverage...");
+        Map<String, ReportData> targetCoverageData = ServiceRegistry
+                .getTargetCoverageRepository(buildLog).get(coverageMetaData);
+        buildLog.println(BUILD_LOG_PREFIX + " targetCoverage: " + targetCoverageData);
+
+        buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
+        Map<String, ReportData> coverageData = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
+                jacocoCounterType, coverageMetaData.getReportMetaDataList()).get(workspace);
+        buildLog.println(BUILD_LOG_PREFIX + " coverage: " + coverageData);
+
+        if(targetCoverageData==null) buildLog.println(BUILD_LOG_PREFIX + " Record Branch Coverage with CoverageMetaData: " + coverageMetaData);
+
+        List<Message> messages = new ArrayList<>();
+        float coverage, targetCoverage;
+        for(String label: coverageData.keySet()) {
+            coverage = coverageData.get(label).getRate();
+
+            if(targetCoverageData!=null && targetCoverageData.containsKey(label)) targetCoverage = targetCoverageData.get(label).getRate();
+            else targetCoverage = 0;
+
+            messages.add(new Message(label, coverage, targetCoverage, branchName, changeTarget));
+        }
+        buildLog.println(BUILD_LOG_PREFIX + " messages: " + messages);
+
         if ("comment".equalsIgnoreCase(publishResultAs)) {
             buildLog.println(BUILD_LOG_PREFIX + "publishing result as comment");
-            publishComment(message, buildUrl, jenkinsUrl, settingsRepository, gitHubRepository, prId, listener, targetBranch);
+            publishComment(messages, buildUrl, jenkinsUrl, settingsRepository, gitHubRepository, prId, listener);
         } else {
             buildLog.println(BUILD_LOG_PREFIX + "publishing result as status check");
-            publishStatusCheck(message, gitHubRepository, prId, masterCoverage, coverage, buildUrl, listener, targetBranch);
+            publishStatusCheck(messages, buildUrl, settingsRepository, gitHubRepository, prId, listener);
         }
+
     }
 
     private void publishComment(
-            Message message,
+            List<Message> messages,
             String buildUrl,
             String jenkinsUrl,
             SettingsRepository settingsRepository,
             GHRepository gitHubRepository,
             int prId,
-            TaskListener listener,
-            String targetBranch
+            TaskListener listener
     ) {
         try {
-            final String comment = message.forComment(
-                    buildUrl,
-                    jenkinsUrl,
-                    settingsRepository.getYellowThreshold(),
-                    settingsRepository.getGreenThreshold(),
-                    settingsRepository.isPrivateJenkinsPublicGitHub(),
-                    targetBranch);
+            String comment = messages.stream()
+                    .map(message -> message.forComment(
+                        buildUrl,
+                        jenkinsUrl,
+                        settingsRepository.getYellowThreshold(),
+                        settingsRepository.getGreenThreshold(),
+                        settingsRepository.isPrivateJenkinsPublicGitHub()
+                    )).collect(Collectors.joining("\n"));
             ServiceRegistry.getPullRequestRepository().comment(gitHubRepository, prId, comment);
         } catch (Exception ex) {
             PrintWriter pw = listener.error("Couldn't add comment to pull request #" + prId + "!");
@@ -188,25 +207,27 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
     }
 
     private void publishStatusCheck(
-            Message message,
+            List<Message> messages,
+            String buildUrl,
+            SettingsRepository settingsRepository,
             GHRepository gitHubRepository,
             int prId,
-            float targetCoverage,
-            float coverage,
-            String buildUrl,
-            TaskListener listener,
-            String targetBranch
+            TaskListener listener
     ) {
         try {
-            String text = message.forStatusCheck(targetBranch);
             List<GHPullRequestCommitDetail> commits = gitHubRepository.getPullRequest(prId).listCommits().asList();
-            ServiceRegistry.getPullRequestRepository().createCommitStatus(
+            for(Message message: messages) {
+                ServiceRegistry.getPullRequestRepository().createCommitStatus(
                     gitHubRepository,
                     commits.get(commits.size() - 1).getSha(),
-                    coverage < targetCoverage ? GHCommitState.FAILURE : GHCommitState.SUCCESS,
+                    message.hasFailed(
+                        settingsRepository.getYellowThreshold(),
+                        settingsRepository.getGreenThreshold()
+                    ) ? GHCommitState.FAILURE : GHCommitState.SUCCESS,
                     buildUrl,
-                    text
-            );
+                    message.forStatusCheck()
+                );
+            }
         } catch (Exception e) {
             PrintWriter pw = listener.error("Couldn't add status check to pull request #" + prId + "!");
             e.printStackTrace(pw);

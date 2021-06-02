@@ -22,65 +22,134 @@ import hudson.Util;
 import hudson.remoting.VirtualChannel;
 import jenkins.MasterToSlaveFileCallable;
 import org.apache.tools.ant.DirectoryScanner;
-import org.apache.tools.ant.types.FileSet;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("WeakerAccess")
-final class GetCoverageCallable extends MasterToSlaveFileCallable<Float> implements CoverageRepository {
+final class GetCoverageCallable extends MasterToSlaveFileCallable<Map<String, ReportData>> implements CoverageRepository {
 
     private final boolean disableSimpleCov;
     private String jacocoCounterType = "";
+    private final List<ReportMetaData> reportsMetaDataList;
 
-    GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType) {
+    GetCoverageCallable(final boolean disableSimpleCov, final String jacocoCounterType, List<ReportMetaData> reportsMetaDataList) {
         this.disableSimpleCov = disableSimpleCov;
         this.jacocoCounterType = jacocoCounterType;
+        this.reportsMetaDataList = reportsMetaDataList;
     }
 
-    private List<Float> getFloats(File ws, String path, CoverageReportParser parser) {
-        FileSet fs = Util.createFileSet(ws, path);
-        DirectoryScanner ds = fs.getDirectoryScanner();
-        String[] files = ds.getIncludedFiles();
-        List<Float> cov = new ArrayList<Float>();
-        for (String file : files) {
-            cov.add(parser.get(new File(ds.getBasedir(), file).getAbsolutePath()));
+    /**
+     * Fetch file path to all coverage reports for categorization based on ReportMetaData configuration
+     * @param ws
+     * @return coverageFilePaths
+     */
+    private List<String> getAllReportPaths(final File ws) {
+        List<String> coverageFilePaths = new ArrayList<String>();
+        DirectoryScanner ds;
+        String[] files, paths = new String[]{"**/cobertura.xml", "**/cobertura-coverage.xml", "**/jacoco.xml", "**/jacocoTestReport.xml"};
+        for (String path: paths) {
+            ds = Util.createFileSet(ws, path).getDirectoryScanner();
+            files = ds.getIncludedFiles();
+            for (String file: files) {
+                coverageFilePaths.add(new File(ds.getBasedir(), file).getAbsolutePath());
+            }
         }
-        return cov;
+//        System.out.println("coverageFilePaths: " + coverageFilePaths);
+        return coverageFilePaths;
+    }
+
+    /**
+     * initialize coverageByLabel and include overall coverage under "repo" label in addition to other labels
+     * @param coverageFilePaths
+     * @return coverageByLabel
+     * @throws Exception
+     */
+    public Map<String, ReportData> initializeCoverageByLabel(List<String> coverageFilePaths) throws Exception{
+        String label;
+        Map<String, ReportData> coverageByLabel = new HashMap<>();
+        coverageByLabel.put("repo", new ReportData());
+
+        for(ReportMetaData reportMetaData: reportsMetaDataList) {
+            label = reportMetaData.getLabel();
+            if(!coverageByLabel.containsKey(label)) coverageByLabel.put(label, new ReportData());
+            else throw new Exception("Repeated label: " + label);
+        }
+
+        return coverageByLabel;
+    }
+
+    /**
+     * Add all coverage to "repo" label, reportsMetaDataList should not contain ReportMetaData with "repo" label
+     * @param coverageFilePaths
+     * @return labelByFilePath
+     * @throws Exception
+     */
+    private Map<String, String> categorizeFilePathsToLabels(List<String> coverageFilePaths) throws Exception {
+        String label;
+        Map<String, String> labelByFilePath = new HashMap<>();
+
+        for(String filePath: coverageFilePaths) {
+            for(ReportMetaData reportMetaData: reportsMetaDataList) {
+                label = reportMetaData.getLabel();
+                if(reportMetaData.validate(filePath)) {
+                    if(!labelByFilePath.containsKey(filePath)) labelByFilePath.put(filePath, label);
+                    else throw new Exception("Conflicting labels for coverage path: "
+                            + filePath
+                            + " maps to "
+                            + labelByFilePath.get(filePath)
+                            + " and "
+                            + label
+                    );
+                }
+            }
+        }
+//        System.out.println("labelByFilePath: " + labelByFilePath);
+        return labelByFilePath;
+    }
+
+    /**
+     * aggregates coverage based on RepoMetaData configuration under a specific label
+     * @param coverageFilePaths
+     * @param labelByFilePath
+     * @param coverageByLabel
+     * @return coverageByLabel
+     */
+    private Map<String, ReportData> generateCoverageData(List<String> coverageFilePaths,
+                                      Map<String, String> labelByFilePath,
+                                      Map<String, ReportData> coverageByLabel) {
+        ReportData reportData;
+        for(String filePath: coverageFilePaths) {
+            if (filePath.contains("cobertura.xml") || filePath.contains("cobertura-coverage.xml"))
+                reportData = new CoberturaParser().get(filePath);
+            else
+                reportData = new JacocoParser(jacocoCounterType).get(filePath);
+            if(labelByFilePath.containsKey(filePath)) coverageByLabel.get(labelByFilePath.get(filePath)).add(reportData);
+            coverageByLabel.get("repo").add(reportData);
+        }
+//        System.out.println("coverageByLabel: " + coverageByLabel);
+        return coverageByLabel;
     }
 
     @Override
-    public float get(final FilePath workspace) throws IOException, InterruptedException {
+    public Map<String, ReportData> get(final FilePath workspace) throws IOException, InterruptedException {
         if (workspace == null) {
             throw new IllegalArgumentException("Workspace should not be null!");
         }
-        return workspace.act(new GetCoverageCallable(disableSimpleCov, jacocoCounterType));
+//        return workspace.act(new GetCoverageCallable(disableSimpleCov, jacocoCounterType, reportsMetaDataList));
+        return workspace.act(this);
     }
 
     @Override
-    public Float invoke(final File ws, final VirtualChannel channel) throws IOException {
-        final List<Float> cov = new ArrayList<Float>();
-        cov.addAll(getFloats(ws, "**/cobertura.xml", new CoberturaParser()));
-        cov.addAll(getFloats(ws, "**/cobertura-coverage.xml", new CoberturaParser()));
-        cov.addAll(getFloats(ws, "**/jacoco.xml", new JacocoParser(jacocoCounterType)));
-        //default for gradle
-        cov.addAll(getFloats(ws, "**/jacocoTestReport.xml", new JacocoParser(jacocoCounterType)));
-        cov.addAll(getFloats(ws, "**/clover.xml", new CloverParser()));
-        if (!disableSimpleCov) {
-            cov.addAll(getFloats(ws, "**/coverage.json", new SimpleCovParser()));
-        }
-
-        float s = 0;
-        for (float v : cov) {
-            s += v;
-        }
-
-        if (cov.isEmpty()) {
-            return 0f;
-        } else {
-            return s / cov.size();
+    public Map<String, ReportData> invoke(final File ws, final VirtualChannel channel) throws IOException {
+        try {
+            List<String> coverageFilePaths = getAllReportPaths(ws);
+            Map<String, ReportData> coverageByLabel = initializeCoverageByLabel(coverageFilePaths);
+            Map<String, String> labelByFilePath = categorizeFilePathsToLabels(coverageFilePaths);
+            return generateCoverageData(coverageFilePaths, labelByFilePath, coverageByLabel);
+        } catch (Exception e) {
+            throw new IOException(e.getMessage());
         }
     }
 

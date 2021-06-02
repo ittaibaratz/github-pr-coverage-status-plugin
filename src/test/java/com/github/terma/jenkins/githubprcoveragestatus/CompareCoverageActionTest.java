@@ -214,7 +214,7 @@ public class CompareCoverageActionTest {
         ReportData buildReportData = mock(ReportData.class);
         when(buildReportData.getRate()).thenReturn(prCoverage);
         coverageData.put("repo", buildReportData);
-        when(coverageRepository.get(System.out, null)).thenReturn(coverageData);
+        when(coverageRepository.get(null)).thenReturn(coverageData);
         initMocks();
     }
 

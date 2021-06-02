@@ -1,6 +1,8 @@
 package com.github.terma.jenkins.githubprcoveragestatus;
 
-public class ReportData {
+import java.io.Serializable;
+
+public class ReportData implements Serializable {
     private int covered;
     private int total;
 

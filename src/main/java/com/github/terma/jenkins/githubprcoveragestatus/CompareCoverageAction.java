@@ -154,10 +154,10 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
 
         buildLog.println(BUILD_LOG_PREFIX + "collecting build coverage...");
         Map<String, ReportData> coverageData = ServiceRegistry.getCoverageRepository(settingsRepository.isDisableSimpleCov(),
-                jacocoCounterType, coverageMetaData.getReportMetaDataList()).get(buildLog, workspace);
+                jacocoCounterType, coverageMetaData.getReportMetaDataList()).get(workspace);
         buildLog.println(BUILD_LOG_PREFIX + " coverage: " + coverageData);
 
-        if(targetCoverageData==null) buildLog.println(BUILD_LOG_PREFIX + " Record Branch Coverage with CoverageMetaData: " + coverageData);
+        if(targetCoverageData==null) buildLog.println(BUILD_LOG_PREFIX + " Record Branch Coverage with CoverageMetaData: " + coverageMetaData);
 
         List<Message> messages = new ArrayList<>();
         float coverage, targetCoverage;

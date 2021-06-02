@@ -73,8 +73,8 @@ class CoberturaParser implements CoverageReportParser {
         try {
             int linesCovered = 0, linesValid = 0, branchesCovered = 0, branchesValid = 0;
             float lineRate = 0.0f, branchRate = 0.0f;
-            String source = null, tag = null;
-            boolean foundCoverage = false, foundSource = false;
+            String tag = null;
+            boolean foundCoverage = false;
 
             // Read XML using StAX
             XMLInputFactory xmlInputFactory = XMLInputFactory.newFactory();
@@ -105,24 +105,6 @@ class CoberturaParser implements CoverageReportParser {
             xmlStreamReader.close();
 
             return new ReportData(linesCovered, linesValid);
-
-//            // Read from String
-//            String content = FileUtils.readFileToString(new File(coberturaFilePath));
-//            lineRate = Float.parseFloat(findFirst(content, "line-rate=['\"]([0-9.]+)['\"]"));
-//            linesCovered = Integer.parseInt(findFirst(content, "lines-covered=['\"]([0-9]+)['\"]"));
-//            linesValid = Integer.parseInt(findFirst(content, "lines-valid=['\"]([0-9]+)['\"]"));
-//
-//            branchRate = Float.parseFloat(findFirst(content, "branch-rate=['\"]([0-9.]+)['\"]"));
-//            branchesValid = Integer.parseInt(findFirst(content, "branches-valid=['\"]([0-9]+)['\"]"));
-//            branchesCovered = Integer.parseInt(findFirst(content, "branches-covered=['\"]([0-9]+)['\"]"));
-//
-//            if (lineRate > 0 && branchRate == 0) {
-//              return lineRate;
-//            } else if (lineRate == 0 && branchRate > 0) {
-//              return branchRate;
-//            } else {
-//              return lineRate / 2 + branchRate / 2;
-//            }
         } catch (IOException | XMLStreamException e) {
             throw new RuntimeException(e);
         }

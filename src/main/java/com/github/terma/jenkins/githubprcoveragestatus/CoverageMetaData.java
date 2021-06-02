@@ -1,10 +1,11 @@
 package com.github.terma.jenkins.githubprcoveragestatus;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-public class CoverageMetaData {
+public class CoverageMetaData implements Serializable {
     private String gitUrl;
     private String gitBranch;
     private List<ReportMetaData> reportMetaDataList;

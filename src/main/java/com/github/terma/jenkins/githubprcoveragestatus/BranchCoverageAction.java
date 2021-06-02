@@ -109,7 +109,7 @@ public class BranchCoverageAction extends Recorder implements SimpleBuildStep {
 
         buildLog.println("branch coverage....");
         Map<String, ReportData> branchCoverageData = ServiceRegistry.getCoverageRepository(disableSimpleCov, jacocoCounterType, coverageMetaData.getReportMetaDataList())
-                .get(buildLog, workspace);
+                .get(workspace);
         buildLog.println("coverage: " + branchCoverageData);
         for(String label: branchCoverageData.keySet()) {
             buildLog.println(label + ": " + Percent.toString(branchCoverageData.get(label).getRate()));

@@ -60,10 +60,6 @@ class Message {
 
     public String forComment(
             final String buildUrl, final String jenkinsUrl,
-<<<<<<< HEAD
-=======
-            final int yellowThreshold, final int greenThreshold,
->>>>>>> e83207f0709499d795260ce707d81732c608b54d
             final boolean useShieldsIo) {
         final String icon = forIcon();
         if (useShieldsIo) {
@@ -87,13 +83,6 @@ class Message {
                 Percent.toString(Percent.change(coverage, targetCoverage)),
                 changeTarget,
                 Percent.toWholeNoSignString(targetCoverage));
-<<<<<<< HEAD
-=======
-    }
-
-    public boolean hasFailed(final int yellowThreshold, final int greenThreshold) {
-        return !getColor(yellowThreshold, greenThreshold).equals(COLOR_GREEN);
->>>>>>> e83207f0709499d795260ce707d81732c608b54d
     }
 
     private String shieldIoUrl(String icon) {
@@ -107,23 +96,8 @@ class Message {
         }
     }
 
-<<<<<<< HEAD
     private String getColor() {
         return coverage >= targetCoverage ? COLOR_GREEN : COLOR_RED;
-=======
-    private String getColor(int yellowThreshold, int greenThreshold) {
-        String color = COLOR_GREEN;
-        final int coveragePercent = Percent.of(coverage);
-        final boolean isCoverageHigher = Percent.change(coverage, targetCoverage) >= 0;
-        if (isCoverageHigher) {
-            return color;
-        } else if (coveragePercent < yellowThreshold) {
-            color = COLOR_RED;
-        } else if (coveragePercent < greenThreshold) {
-            color = COLOR_YELLOW;
-        }
-        return color;
->>>>>>> e83207f0709499d795260ce707d81732c608b54d
     }
 
     /**

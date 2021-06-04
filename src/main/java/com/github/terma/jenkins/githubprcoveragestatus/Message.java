@@ -27,7 +27,6 @@ class Message {
     private static final String BADGE_TEMPLATE = "https://img.shields.io/badge/%s-%s-%s.svg";
 
     private static final String COLOR_RED = "red";
-    private static final String COLOR_YELLOW = "yellow";
     private static final String COLOR_GREEN = "brightgreen";
 
     private final String label;
@@ -61,11 +60,10 @@ class Message {
 
     public String forComment(
             final String buildUrl, final String jenkinsUrl,
-            final int yellowThreshold, final int greenThreshold,
             final boolean useShieldsIo) {
         final String icon = forIcon();
         if (useShieldsIo) {
-            return "[![" + icon + "](" + shieldIoUrl(icon, yellowThreshold, greenThreshold) + ")](" + buildUrl + ")";
+            return "[![" + icon + "](" + shieldIoUrl(icon) + ")](" + buildUrl + ")";
         } else {
             return "[![" + icon + "](" + jenkinsUrl + "/coverage-status-icon/" +
                     "?label=" + label +
@@ -87,12 +85,8 @@ class Message {
                 Percent.toWholeNoSignString(targetCoverage));
     }
 
-    public boolean hasFailed(final int yellowThreshold, final int greenThreshold) {
-        return !getColor(yellowThreshold, greenThreshold).equals(COLOR_GREEN);
-    }
-
-    private String shieldIoUrl(String icon, final int yellowThreshold, final int greenThreshold) {
-        final String color = getColor(yellowThreshold, greenThreshold);
+    private String shieldIoUrl(String icon) {
+        final String color = getColor();
         // dash should be encoded as two dash
         icon = icon.replace("-", "--");
         try {
@@ -102,18 +96,8 @@ class Message {
         }
     }
 
-    private String getColor(int yellowThreshold, int greenThreshold) {
-        String color = COLOR_GREEN;
-        final int coveragePercent = Percent.of(coverage);
-        final boolean isCoverageHigher = Percent.change(coverage, targetCoverage) >= 0;
-        if (isCoverageHigher) {
-            return color;
-        } else if (coveragePercent < yellowThreshold) {
-            color = COLOR_RED;
-        } else if (coveragePercent < greenThreshold) {
-            color = COLOR_YELLOW;
-        }
-        return color;
+    private String getColor() {
+        return coverage >= targetCoverage ? COLOR_GREEN : COLOR_RED;
     }
 
     /**

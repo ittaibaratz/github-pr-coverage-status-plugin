@@ -8,17 +8,8 @@ interface SettingsRepository {
 
     String getJenkinsUrl();
 
-    int getYellowThreshold();
-
-    int getGreenThreshold();
-
     boolean isPrivateJenkinsPublicGitHub();
-
-//    boolean isUseSonarForTargetCoverage();
 
     boolean isDisableSimpleCov();
 
-//    String getSonarUrl();
-//
-//    String getSonarToken();
 }

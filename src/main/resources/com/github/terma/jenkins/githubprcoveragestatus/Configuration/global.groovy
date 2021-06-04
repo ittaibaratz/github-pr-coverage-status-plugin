@@ -20,14 +20,6 @@ f.section(title: descriptor.displayName) {
         f.textbox()
     }
 
-    f.entry(field: "yellowThreshold", title: _("Yellow threshold 0-100%")) {
-        f.textbox()
-    }
-
-    f.entry(field: "greenThreshold", title: _("Green Threshold 0-100%")) {
-        f.textbox()
-    }
-
     f.entry(field: "disableSimpleCov", title: _("Disable SimpleCov coverage parser")) {
         f.checkbox()
     }

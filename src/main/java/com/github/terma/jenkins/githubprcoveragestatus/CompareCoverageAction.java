@@ -195,8 +195,6 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
                     .map(message -> message.forComment(
                         buildUrl,
                         jenkinsUrl,
-                        settingsRepository.getYellowThreshold(),
-                        settingsRepository.getGreenThreshold(),
                         settingsRepository.isPrivateJenkinsPublicGitHub()
                     )).collect(Collectors.joining("\n"));
             ServiceRegistry.getPullRequestRepository().comment(gitHubRepository, prId, comment);
@@ -220,10 +218,7 @@ public class CompareCoverageAction extends Recorder implements SimpleBuildStep {
                 ServiceRegistry.getPullRequestRepository().createCommitStatus(
                     gitHubRepository,
                     commits.get(commits.size() - 1).getSha(),
-                    message.hasFailed(
-                        settingsRepository.getYellowThreshold(),
-                        settingsRepository.getGreenThreshold()
-                    ) ? GHCommitState.FAILURE : GHCommitState.SUCCESS,
+                    GHCommitState.SUCCESS,
                     buildUrl,
                     message.forStatusCheck()
                 );

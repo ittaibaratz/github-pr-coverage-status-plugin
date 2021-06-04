@@ -45,14 +45,6 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         return DESCRIPTOR.getGitHubApiUrl();
     }
 
-    public static int getYellowThreshold() {
-        return DESCRIPTOR.getYellowThreshold();
-    }
-
-    public static int getGreenThreshold() {
-        return DESCRIPTOR.getGreenThreshold();
-    }
-
     public static String getPersonalAccessToken() {
         return DESCRIPTOR.getPersonalAccessToken();
     }
@@ -79,9 +71,6 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         private String personalAccessToken;
         private String jenkinsUrl;
         private boolean privateJenkinsPublicGitHub;
-
-        private int yellowThreshold = DEFAULT_YELLOW_THRESHOLD;
-        private int greenThreshold = DEFAULT_GREEN_THRESHOLD;
 
         public ConfigurationDescriptor() {
             load();
@@ -113,16 +102,6 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         }
 
         @Override
-        public int getYellowThreshold() {
-            return yellowThreshold;
-        }
-
-        @Override
-        public int getGreenThreshold() {
-            return greenThreshold;
-        }
-
-        @Override
         public boolean isPrivateJenkinsPublicGitHub() {
             return privateJenkinsPublicGitHub;
         }
@@ -141,8 +120,6 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         public boolean configure(StaplerRequest req, JSONObject formData) throws FormException {
             gitHubApiUrl = StringUtils.trimToNull(formData.getString("gitHubApiUrl"));
             personalAccessToken = StringUtils.trimToNull(formData.getString("personalAccessToken"));
-            yellowThreshold = NumberUtils.toInt(formData.getString("yellowThreshold"), DEFAULT_YELLOW_THRESHOLD);
-            greenThreshold = NumberUtils.toInt(formData.getString("greenThreshold"), DEFAULT_GREEN_THRESHOLD);
             jenkinsUrl = StringUtils.trimToNull(formData.getString("jenkinsUrl"));
             privateJenkinsPublicGitHub = BooleanUtils.toBoolean(formData.getString("privateJenkinsPublicGitHub"));
             disableSimpleCov = BooleanUtils.toBoolean(formData.getString("disableSimpleCov"));

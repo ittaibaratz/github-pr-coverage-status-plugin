@@ -71,12 +71,6 @@ public class Configuration extends AbstractDescribableImpl<Configuration> {
         private String personalAccessToken;
         private String jenkinsUrl;
         private boolean privateJenkinsPublicGitHub;
-<<<<<<< HEAD
-=======
-
-        private int yellowThreshold = DEFAULT_YELLOW_THRESHOLD;
-        private int greenThreshold = DEFAULT_GREEN_THRESHOLD;
->>>>>>> e83207f0709499d795260ce707d81732c608b54d
 
         public ConfigurationDescriptor() {
             load();
